@@ -718,7 +718,64 @@ window.sayName();// jay
 
 
 
+###### 2.5 构造函数的问题
 
+```javascript
+function Person(name, age, job){
+    this.name = name;
+    this.age = age;
+    this.job = job;
+    this.sayNmae = new Function(
+    	console.log(this.name)
+    )
+}
+let person1 = new Person('jay','man','software engineer');
+ler person2 = new Person('tom','women','lawyer')
+```
+
+上面这样的代码中， <span style="color:red">**由于 ECMAScript 中的函数是对象， 因此每次定义函数的时，都会初始化一个对象。** </span>
+
+这样，不同实例对象尽管是都一个构造函数， 但是每次实例化，其中的函数都不是同一个。因为都是做一样的事， 所以没有必要定义两个不同的Function实例。  **况且， this对象可以把函数与对象的绑定推迟到运行时**。
+
+
+
+也有办法解决这个问题，容易想到的是，就是把这个函数定义放在外面，然后每次实例化对象的时候，就指向这个同一个函数。 
+
+```javascript
+function Perso(name, age, job){
+    this.name = name;
+    this.age = age;
+    this.job = job;
+    this.sayName = sayNamel
+}
+function sayName(){
+    console.log(this.name);
+}
+let person1 = new Person('jay','man','software engineer');
+ler person2 = new Person('tom','women','lawyer')
+```
+
+> 构造函数内部， sayName 属性中包含的只是一个指向外部函数的指针。 
+
+但是这样虽然解决了相同逻辑的函数重复定义的问题， 但是全局作用域也因此被搞乱了。 
+
+所以为了解决这个问题的副作用， 我们需要通过原型牧师来解决。 
+
+###### 2.6 原型模式
+
+**每个函数都会创建一个 `prototype` 属性，这个属性是一个对象， 实际上，它就是通过调用构造函数创建的对象的原型。** 
+
+使用原型对象的函数时，在它上面定义的属性和方法可以被对象实例共享。  
+
+这样一来，就能够解决相同逻辑函数重复定义问题的同时，也能将代码都维护在构造函数内部。 
+
+以下是用例：
+
+```javascript
+function Person(){}
+
+Person.prototype.name = ''
+```
 
 
 

@@ -742,7 +742,7 @@ ler person2 = new Person('tom','women','lawyer')
 也有办法解决这个问题，容易想到的是，就是把这个函数定义放在外面，然后每次实例化对象的时候，就指向这个同一个函数。 
 
 ```javascript
-function Perso(name, age, job){
+function Person(name, age, job){
     this.name = name;
     this.age = age;
     this.job = job;
@@ -761,7 +761,7 @@ ler person2 = new Person('tom','women','lawyer')
 
 所以为了解决这个问题的副作用， 我们需要通过原型牧师来解决。 
 
-###### 2.6 原型模式
+##### 3 原型模式
 
 **每个函数都会创建一个 `prototype` 属性，这个属性是一个对象， 实际上，它就是通过调用构造函数创建的对象的原型。** 
 
@@ -772,12 +772,34 @@ ler person2 = new Person('tom','women','lawyer')
 以下是用例：
 
 ```javascript
-function Person(){}
-
-Person.prototype.name = ''
+function Person(name, age) {
+  this.name = name;
+  this.age = age;
+}
+Person.prototype.sayName = function () {
+  console.log(this.name);
+};
+let person1 = new Person("jay", 27);
+let person2 = new Person("tom", 25);
+person1.sayName(); //jay
+person2.sayName(); //tom
 ```
 
+###### 3.1 理解原型
 
+无论何时， 只要创建一个函数，就会按照特定的规则为这个函数创建一个 `prototype` 属性（指向原型对象）。 默认情况下， 所有原型对象自动获得一个名为`constructor` 的属性，指回与之关联的构造函数。 对前面的例子而言。 `Person.prototype.constructor` 指向 `Person` 。 
+
+在自定义构造函数的时候，原型对象默认只会获得`constructor` 属性， 其他所有方法都继承自`Object`。 每次调用构造函数创建一个新实例， 这个实例的内部`[[Prototype]]` 指针就会被赋值为构造函数的原型对象。 
+
+> 脚本中没有访问这个`[[Prototype]]`特性的标准方式， 但是在流行的现代浏览器中，一般回在每个对象上暴露`__proto__` 属性， 通过这个属性可以访问对象的原型。 
+
+```javascript
+function Person(name, age) {
+  this.name = name;
+  this.age = age;
+}
+console.dir(Person, "--line5");
+```
 
 
 

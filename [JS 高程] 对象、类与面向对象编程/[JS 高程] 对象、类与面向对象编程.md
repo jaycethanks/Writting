@@ -829,6 +829,10 @@ console.dir(Person, "--line5");
 
 
 
+
+
+
+
 ## 3. 继承
 
 
@@ -836,3 +840,213 @@ console.dir(Person, "--line5");
 
 
 ## 4. 类
+
+
+
+
+
+## 章节拓展
+
+> https://www.bilibili.com/video/BV1Kt411w7MP?p=23
+> 2019全新javaScript进阶面向对象ES6 (P23 - P38)
+> 讲师：黑马程序员 - pink
+
+##### P23 01- 构造函数和原型导读
+
+目标：
+
+	1. 能使用构造函数创建对象
+	1. 能够说出原型的作用
+	1. 能够说出访问对象成员的规则
+	1. 能够使用ES5 新增的一些方法
+
+目录：
+
+- 构造函数和原型
+- 继承
+- ES5新增的方法
+
+##### P24 02- 利用构造函数创建对象
+
+**1.1 概述**
+
+- ”类就是对象的模板，对象就是类的实例“
+
+> 类的概念在ES6才被引入
+
+- 在ES6 之前，对象不是基于类创建的，二十用一种成为<span style="color:red">构建函数</span>的特殊函数来定义对象和它们的特征。
+
+- 创建对象可以通过以下三种方式创建
+
+  1. 对象字面量
+
+  2. `new Object()`
+
+  3. 自定义构造函数
+
+     > ```javascript
+     > function Star(uname,age){
+     >     this.uname = uname;
+     >     this.age = age;
+     >     this.sing = function(){
+     >         console.log("我会唱歌")
+     >     }
+     > }
+     > let ldh = new Star('刘德华',18)
+     > let zxy = new Star('张学友',19)
+     > ldh.sing()
+     > ```
+     >
+     > 通过构造函数创建对象的过程：
+     >
+     > 1. 通过`new` 关键字创建一个空对象
+     > 2. 将`this` 指向这个空对象
+     > 3. 执行构造函数里面的代码，给这个新对象添加属性和方法
+     > 4. 返回实例化的对象。
+
+##### P25 03- 实例成员和静态成员
+
+1. 静态成员： 在构造函数上添加的成员成为 <span style="color:red">静态成员，只能由构造函数本身来访问</span>
+
+   > 直接在构造函数上添加的成员，即静态成员，如：
+   >
+   > ```javascript
+   > function Star(){}
+   > Star.sex = '男'
+   > ```
+   >
+   > 静态成员只能通过构造函数来访问：
+   >
+   > ```javascript
+   > console.log(Star.sex);//男
+   > ```
+
+2. 实例成员： 在构造函数内部创建的对象成员称为 <span style="color:red">实例成员，只能由实例化的对象来访问</span>
+
+   > 通过构造函数内部的`this`添加的成员， 如上例的`uname`， `age`， `sing`。不可以通过构造函数访问。
+
+##### P26 04- 构造函数原型对象 `prototype`
+
+![image-20220221222730212]([JS 高程] 对象、类与面向对象编程.assets/image-20220221222730212.png)
+
+>  实例成员如果是一个复杂数据类型，那么每次实例化对象，这个成员都会重新在内存中去开辟空间。 这样，如果这是一个逻辑相同的函数， 那么每次创建就会造成内存浪费。
+
+**构造函数通过原型分配的函数是所有对象所<span style="color:red">共享的</span>**
+
+> 什么是`prototype` ?
+>
+> JavaScript 规定， <span style="color:red">每一个构造函数都有一个`prototype` 属性</span>, 指向另一个对象。 这一这个`prototype` 就是一个对象， <u>这个对象的所有属性和方法，都会被构造函数所拥有。</u> 
+>
+> ```javascript
+> function Star(uname,age){
+>     this.uname = uname;
+>     this.age = age;
+>     this.sing = function(){
+>         console.log("我会唱歌")
+>     }
+> }
+> console.dir(Star)
+> ```
+>
+> ![image-20220221224550710]([JS 高程] 对象、类与面向对象编程.assets/image-20220221224550710.png)
+
+<span style="color:red">我们可以把哪些不变的方法，直接定义在`prototype` 对象上， 这样所有对象的实例就可以共享这些方法。</span>
+
+如：
+
+```javascript
+function Star(uname,age){
+    this.uname = uname;
+    this.age = age;
+}
+Star.prototype.sing = function(){ console.log("我会唱歌")}
+let ldh = new Star('刘德华',18)
+let zxy = new Star('张学友',19)
+ldh.sing()
+zxy.sing()
+```
+
+
+
+**小结：** 一般情况下，我们的公共属性定义到构造函数里面，公共的方法我们放到原型对象身上。
+
+原型对象(`prototype`) 的主要作用是什么 ？实现了实例对象方法的共享，节省了内存空间。 
+
+
+
+##### P27 05- 对象原型 `__ptoto__`
+
+先决问题 ： 我们在构造函数的原型对象（`prototype`）上定义的方法，为什么实例化对象能够直接访问？
+
+<span style="color:red"> 每个对象都会有一个属性——`__proto__`</span> 指向构造函数的 `prototype` 对象，之所以我们对象啊可以使用构造函数`prototype`原型对象的属性和方法，就是因为对象有`__proto__`原型的存在。
+
+```javascript
+function Star(uname,age){
+    this.uname = uname;
+    this.age = age;
+}
+Star.prototype.sing = function(){ console.log("我会唱歌")}
+let ldh = new Star('刘德华',18)
+console.log(ldh.__proto__ === Star.prototype);// true
+```
+
+> 注意： 实际上指向的是一个内部不可直接访问的属性 —— `[[prototype]]` , firefox 中标记为`<prototype>` 当你直接打印实例对象的时候，不同的浏览器输出结果也是不一样的。老师演示的浏览器版本打印实例化对象上面就直接会有一个`__proto__`属性。
+>
+> ```javascript
+> function Star(uname,age){
+>     this.uname = uname;
+>     this.age = age;
+> }
+> Star.prototype.sing = function(){ console.log("我会唱歌")}
+> let ldh = new Star('刘德华',18)
+> console.log(ldh)
+> ```
+>
+> ![image-20220221231021518]([JS 高程] 对象、类与面向对象编程.assets/image-20220221231021518.png)
+>
+> 然而这是历史包袱， 最新的浏览器中，都没有，如chrome中是这样的：
+>
+> ![image-20220221231343610]([JS 高程] 对象、类与面向对象编程.assets/image-20220221231343610.png)
+>
+> firefox 中是这样：
+>
+> ![image-20220221231310555]([JS 高程] 对象、类与面向对象编程.assets/image-20220221231310555.png)
+>
+> MDN 上说`__proto__` 是不推荐使用的， 应该用`Object.getPrototypeOf/Reflect.getPrototypeOf` 和`Object.setPrototypeOf/Reflect.setPrototypeOf`来代替。
+>
+> 老版本浏览器的DevTools 的本意是想让你知道这个对象的原型是什么。
+>
+> 所以，切勿在代码中使用`__proto__` ，即便它能够被访问到。
+>
+> <span style="color:red">**记住，`__proto__` 对象原型，是指向该对象的构造函数的原型对象的`prototype`，二者是等价的**</span>
+
+![image-20220221232137275]([JS 高程] 对象、类与面向对象编程.assets/image-20220221232137275.png)
+
+##### P28 06- 原型constructor 构造函数
+
+##### P29 07- 构造函数实例和原型对象三角关系
+
+##### P30 08- 原型链
+
+##### P31 09- 对象成员查找规则
+
+##### P32 10- 原型对象this 指向
+
+##### P33 11- 利用原型对象扩展内置对象方法
+
+##### P34 12- call方法的作用
+
+##### P35 13- 利用父构造函数继承属性
+
+##### P36 14- 利用原型对象继承方法（上）
+
+##### P37 15- 利用原型对象继承方法（下）
+
+##### P38 16- 类的本质
+
+
+
+
+
+
+

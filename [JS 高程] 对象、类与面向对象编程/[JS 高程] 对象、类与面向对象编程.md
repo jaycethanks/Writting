@@ -789,23 +789,134 @@ person2.sayName(); //tom
 
 无论何时， 只要创建一个函数，就会按照特定的规则为这个函数创建一个 `prototype` 属性（指向原型对象）。 默认情况下， 所有原型对象自动获得一个名为`constructor` 的属性，指回与之关联的构造函数。 对前面的例子而言。 `Person.prototype.constructor` 指向 `Person` 。 
 
-在自定义构造函数的时候，原型对象默认只会获得`constructor` 属性， 其他所有方法都继承自`Object`。 每次调用构造函数创建一个新实例， 这个实例的内部`[[Prototype]]` 指针就会被赋值为构造函数的原型对象。 
+<span style="color:red">在自定义构造函数的时候，原型对象默认只会获得`constructor` 属性， 其他所有方法都继承自`Object`。 每次调用构造函数创建一个新实例， 这个实例的内部`[[Prototype]]` 指针就会被赋值为构造函数的原型对象。 </span>
 
 > 脚本中没有访问这个`[[Prototype]]`特性的标准方式， 但是在流行的现代浏览器中，一般回在每个对象上暴露`__proto__` 属性， 通过这个属性可以访问对象的原型。 
 
-```javascript
-function Person(name, age) {
-  this.name = name;
-  this.age = age;
-}
-console.dir(Person, "--line5");
-```
+
+
+以上实例中，各个对象之间的关系如下图所示：
+
+![image-20220222183803778]([JS 高程] 对象、类与面向对象编程.assets/image-20220222183803778.png)
+
+> - 注意：`Person.prototype` 指向原型对象，而`Person.prototype.constructor` 指回`Person` 构造函数。 
+>
+> - `Person` 的两个实例`person1`, `person2` 都只有一个内部属性 指回 `Person.prototype`, 而且两者都与构造函数没有直接关系。另外，虽然者两个实例都没有属性和方法，但是`person1.sayName()` 可以正常调用。 这是由于对象属性查找机制的原因。
+>
+> - **<span style="color:red">`isProtutypeOf()`</span> 方法：**虽然不是所有实现都对外暴露了`[[Prototype]]`， 但是可以使用 <span style="color:red">`isProtutypeOf()`</span>方法确定两个对象的这种关系
+>
+>   ```javascript
+>   console.log(Person.prototype.isPrototypeOf(person1));//true
+>   console.log(Person.prototype.isPrototypeOf(person2));//true
+>   ```
+>
+>   本质上， `isPrototypeOf()` 会在传入参数的`[[Prototype]]` 指向调用它的对象时，返回 `true`
+>
+> - **<span style="color:red">`setPrototypeOf() `</span>方法：**<span style="color:red">ECMAScript 的 Object 类型有一个方法叫 `Object.getPrototypeOf()`，返回参数的内部特性 `[[Prototype]]` 的值，这是取得一个对象的原型的合法手段。 </span>
+>
+>   ```javascript
+>   console.log(Object.getPrototypeOf(person1)) == Person.prototype);// true
+>   console.log(Object.getPrototypeOf(person1).name);//'jay'
+>   ```
+>
+> - **<span style="color:red">`setPrototypeOf() `</span>方法：** 可以向实例的私有特性 `[[Prototype]]` 写入一个新的值。 这样就可以重写一个对象的原型继承关系。
+>
+>   ```javascript
+>   // 示例
+>   let biped = {
+>       numLegs: 2
+>   };
+>   let person = {
+>       name: 'Matt'
+>   }
+>   Object.setPrototypeOf(person,biped);
+>   console.log(person.name);// Matt
+>   console.log(person.numLegs); //2
+>   console.log(Object.getPrototype(person) === biped);// true
+>   ```
+>
+>   > （MDN：修改继承关系影响微妙深远, 且可能造成性能下降）
+>   >
+>   > 为了避免使用 `Object.setPrototypeOf()` 可能造成的性能下降，可以通过`Object.create()` 来创建一个新的对象，同时为其指定原型：
+>   >
+>   > ```javascript
+>   > let biped = {
+>   >     numLegs: 2
+>   > };
+>   > let person = Object.create(biped);
+>   > person.name = 'Matt';
+>   > console.log(person.name) ;//Matt
+>   > console.log(person.numLegs);// 2
+>   > console.log(Object.getPrototypeOf(person) === biped);// true
+>   > ```
+
+###### 3.2 原型层级
+
+**原型在用于在多个对象实例之间共享属性和方法的原理：** 逐级查找， 实例对象上有没有目标属性或者方法？  =>  原型对象上有没有 ？ => Object 原型对象上有没有 ？
+
+> **<span style="color:red">:warning: 注意： 前面提到的 `constructor` 属性只存在于原型对象，因此通过实例对象也是可以访问到的。</span>**
+
+- **<span style="color:red">`hasOwnProperty() `</span>方法：** 用于确定某个属性实在实例上还是在原型对象上。<span style="color:red">仅指定属性存在于目标对象上时才会返回`true`  </sapn>
+
+  ```javascript
+  function Person(name, age) {
+    this.name = name;
+  }
+  Person.prototype.sayName = function () {
+    console.log(this.name);
+  };
+  let person1 = new Person("jay", 26);
+  console.log(Person.hasOwnProperty("name"), "--line8"); //true
+  console.log(Person.hasOwnProperty("sayName"), "--line9"); //false
+  
+  console.log(person1.hasOwnProperty("name"), "--line11"); //true
+  console.log(person1.hasOwnProperty("sayName"), "--line12"); //false
+  ```
 
 
 
+###### 3.3 `in` 操作符
+
+有两种方式去使用`in` 操作符：
+
+1. 单独使用 ： 当可以通过对象访问指定属性时 返回 `true`, 无论该属性实在实例上，还是在原型上。
+
+   ```javascript
+   function Person(name, age) {
+     this.name = name;
+   }
+   Person.prototype.sayName = function () {
+     console.log(this.name);
+   };
+   let person1 = new Person("jay", 26);
+   
+   console.log("sayName" in person1, "--line9");//true
+   console.log("name" in person1, "--line10");//true
+   ```
+
+2. 在`for-in` 循环中使用 `in` 操作符时， 可以通过对象且可被枚举的属性都会返回，包括实例属性和原型属性。
+
+   ```javascript
+   function Person(name, age) {
+     this.name = name;
+   }
+   Person.prototype.sayName = function () {
+     console.log(this.name);
+   };
+   let person1 = new Person("jay", 26);
+   
+   for (let i in person1) {
+     console.log(i, "--line10");
+   }
+   //name
+   //sayName
+   ```
 
 
 
+- to do ： 有哪些相关方法
+
+关于 原型对象和实例对象以及Object 的关系更通俗的阐述，这部分内容请查看末尾的 [章节拓展](#章节拓展)
 
 
 
@@ -1024,25 +1135,93 @@ console.log(ldh.__proto__ === Star.prototype);// true
 
 ##### P28 06- 原型constructor 构造函数
 
+<span style="color:red">对象原型（`__proto__`）</span> 和 <span style="color:red">构造函数原型对象（`prototype`）</span>里面都有一个<span style="color:red">`constructor`</span>属性， 我们称之为构造函数， 因为它指回构造函数本身。
+
+ ```javascript
+ function Person(name, age) {
+   this.name = name;
+   this.age = age;
+ }
+ let person1 = new Person("jay", 26);
+ console.log(Person.prototype.constructor === Person, "--line6");//true
+ console.log(person1.__proto__.constructor === Person, "--line7");//true
+ ```
+
+> **注意：** 如果我们修改了原来的原型对象， 给原型对象赋值的是一个对象， 则必须手动利用constructor指回原来的构造函数
+>
+> ```javascript
+> function Person(name, age) {
+>   this.name = name;
+>   this.age = age;
+> }
+> Person.prototype = {
+>   sing: function () {
+>     console.log("i can sing", this, "--line7");
+>   },
+>   run: function () {
+>     console.log("i can run", "--line10");
+>   },
+> };
+> let person1 = new Person("jay", 26);
+> console.log(Person.prototype.constructor, "--line6");//ƒ Object() { [native code] } '--line6'
+> console.log(person1.__proto__.constructor, "--line7");//ƒ Object() { [native code] } '--line6'
+> ```
+>
+> 这里是因为，直接给`Person.prototype` 赋值了一个对象， 当此时访问`Person.prototype.constructor`时，实际上在`Person.prototype` 上是找不到的， 但赋值的是一个对象， 于是向上查找，会指向 `Object`
+>
+> 这时候，手动设定一个`constructor` 属性并指定构造函数即可：
+>
+> ```javascript
+> function Person(name, age) {
+>   this.name = name;
+>   this.age = age;
+> }
+> Person.prototype = {
+>   constructor: Person,
+>   sing: function () {
+>     console.log("i can sing", this, "--line7");
+>   },
+>   run: function () {
+>     console.log("i can run", "--line10");
+>   },
+> };
+> let person1 = new Person("jay", 26);
+> console.log(Person.prototype.constructor, "--line6");
+> console.log(person1.__proto__.constructor, "--line7");
+> // ƒ Person(name, age) {
+> //   this.name = name;
+> //   this.age = age;
+> // } '--line7'
+> ```
+>
+> 
+
 ##### P29 07- 构造函数实例和原型对象三角关系
+
+![image-20220222091526799]([JS 高程] 对象、类与面向对象编程.assets/image-20220222091526799.png)
 
 ##### P30 08- 原型链
 
+![image-20220222091710843]([JS 高程] 对象、类与面向对象编程.assets/image-20220222091710843.png)
+
+> 1. 只要是对象就有`__proto__` 原型， 指向原型对象
+> 2. 我们Star 原型对象里面的`__ptoto__` 原型指向的是`Object.prototype`
+> 3. 我们`Object.prototype` 原型对象里面的 `__proto__` 原型，指向为 `null`
+>
+> 下面是自己画的图@jayce
+>
+> ![image-20220222131305712]([JS 高程] 对象、类与面向对象编程.assets/image-20220222131305712.png)
+
+
+
 ##### P31 09- 对象成员查找规则
 
-##### P32 10- 原型对象this 指向
+1. 当访问一个对象的属性(包括方法)时，首先查找这个 <span style="color:red">对象自身</span> 有没有该属性。 
+2. 如果没有就查找它的原型 （ 也就是 `__proto__` 指向的 <span style="color:red">`prototype` 原型对象</span>）。
+3. 如果还没有就查找原型对象的原型 （ <span style="color:red">Object 的原型对象</span>）
+4. 依此类推一直找到Object 为指，最后一层指向 <span style="color:red">`null`</span>
 
-##### P33 11- 利用原型对象扩展内置对象方法
 
-##### P34 12- call方法的作用
-
-##### P35 13- 利用父构造函数继承属性
-
-##### P36 14- 利用原型对象继承方法（上）
-
-##### P37 15- 利用原型对象继承方法（下）
-
-##### P38 16- 类的本质
 
 
 

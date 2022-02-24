@@ -1158,7 +1158,7 @@ firend.sayHi();//hi
 
 :star: 之所以会这样， 主要原因是实例与原型之间松散的联系。 在调用 `friend.sayHi()` 时， 首先会从这个实例中搜索名为sayHi的属性。 在没有找到的情况下，运行时会继续搜索原型对象。因为实例和原型之间的链接就是简单的指针，而不是保存的副本，所以会在原型上找到`sayHi` 属性并返回这个属性保存的函数。 
 
-**但是注意，这不同于重新原型。** 
+**但是注意，这不同于重写原型。** 
 
 <u>实例的`[[Prototype]]` 指针是在调用构造函数的时候自动赋值的，这个指针即使把原型修改为不同的对象也不会变。 重写整个原型会切断最初原型与构造函数的联系，但是实例引用的仍然时最初的原型。</u> <span style="color:red">**记住， 实例只有指向原型的指针，没有指向构造函数的指针**</span>， 示例：
 
@@ -1184,33 +1184,80 @@ friend.sayName(); // 错误
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## 3. 继承
 
+继承时面向对象编程中讨论最多的话题。 很多面向对象语言都支持两种继承： **接口继承和实现继承**。 前者只继承方法签名， 后者继承实际的方法。 接口继承在ECMAScript 中是不可能的， 因为函数没有签名。  **实现继承 是ECMAScript 唯一支持的继承方式**，而这主要是通过原型链实现的。 
 
+### 3.1 原型链
+
+ECMA-262 把原型链定义为ECMAScript 的主要继承方式。 其基本思想就是通过原型继承多个引用类型的属性和方法。 
+
+重温以下 构造函数、原型、和实例的关系： 每个构造函数都有一个原型对象，原型有一个属性指回构造函数，而实例有一个内部指针指向原型。 如果原型是另一个类型的实例呢 ？ 那就意味着这个原型本身有一个内部指针指向另一个原型， 相应地另一个原型也有一个指针指向另一个构造函数。  这样就在实例和原型之间构造了一条原型链。这就是原型链的基本构想。
+
+实现原型链涉及如下代码模式：
+
+```javascript
+function SuperType(){
+    this.property = true;
+}
+SuperType.prototype.getSuperValue = function(){
+    return this.property;
+}
+function SubType(){
+    this.subproperty = false;
+}
+//继承SuperType
+SubType.prototype = new SuperType();
+SubType.prototype.getSubValue = function(){
+    return this.subproperty;
+}
+let instance = new SubType();
+console.log(instance.getSuperValue());// true
+```
+
+> @jayce: 
+>
+> 首先说说这里想要干什么 ？  简单的来说， 这里想让SubType 的实例能够访问SuperType中的方法， 也称之为 继承。
+>
+> 逐行解读：
+>
+> ```javascript
+> function SuperType(){
+>     this.property = true;
+> }
+> // 定义了一个构造函数 `SuperTaype()` ,当其被实例化时，将会在实例化对象上添加一个 `property`属性，（this指向实例化的对象）
+> 
+> SuperType.prototype.getSuperValue = function(){
+>     return this.property;
+> }
+> // 在 SuperType 这个构造函数的原型对象上定义了一个方法， 这个方法将会返回`property` 属性值， 如果不做修改， 即期望返回 true
+> 
+> function SubType(){
+>     this.subproperty = false;
+> }
+> // 定义了一个名为SubType 的构造函数， 并且如果当其被实例化时， 将会在实例化对象上定义一个 `subproperty` 属性，其值为 false
+> 
+> 
+> SubType.prototype = new SuperType();// 将 SubType 的原型指向了 SuperType 的实例化对象（注意prototype本身也是一个对象）
+> 
+> SubType.prototype.getSubValue = function()
+>     return this.subproperty;
+> }
+> // 在SubType的 原型上定义了一个 `getSubValue`属性，它是一个函数， 将会返回 subproperty。 而由于上一步骤中，将 SubType 原型对象指向SuperType 的实例化对象， 因此，这里实际上，是在 SuperType的实例化对象上添加了一个 getSubValue 方法。
+> 
+> let instance = new SubType();
+> //实例化SubType ，返回实例对象，赋值给 instance 变量
+> 
+> console.log(instance.getSuperValue());// true
+> // 输出值解析：
+> 1. 首先，在instance 上查找有没有 `getSuperValue()` 方法， 没有
+> 2. 然后在instance 的原型上查找，（原型被指向了 SuperType 的实例化对象）， 由于SuperType 的实例化对象上也没有 `getSuperValue` 方法，
+> 3.进一步向上查找，在 SuperType 构造函数的 原型对象上查找， 找到了， 执行方法。
+> ```
+>
+> 下图是其过程描述：
+>
+> ![image-20220224200127097]([JS 高程] 对象、类与面向对象编程.assets/image-20220224200127097.png)
 
 
 

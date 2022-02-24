@@ -1259,6 +1259,34 @@ console.log(instance.getSuperValue());// true
 >
 > ![image-20220224200127097]([JS 高程] 对象、类与面向对象编程.assets/image-20220224200127097.png)
 
+这是书中给到的图
+
+![image-20220224200826422]([JS 高程] 对象、类与面向对象编程.assets/image-20220224200826422.png)
+
+为了更好的理解这段内容所表达的含义， 下面写了一个更便于理解的示例：
+
+```javascript
+function Person() {
+  this.drink = function () {
+    console.log("drink water", "--line3");
+  };
+}
+function Teacher(name) {
+  this.name = name;
+  this.teach = function () {
+    console.log("teach always teaching", "--line8");
+  };
+}
+Teacher.prototype = new Person();
+
+let teacher = new Teacher("lily");
+teacher.drink();//drink water
+```
+
+在这个实例中， 为了实现 Teacher 继承 Person, 为了使得 teacher 这个实例化对象能够使用构造函数Person 中的 drink 方法。 我们通过将Teacher的原型对象 指向 Person 的实例化对象，从而使得，自teacher 对象的属性/方法查找，能够延升到 Teacher 的原型对象。
+
+
+
 
 
 ## 4. 类

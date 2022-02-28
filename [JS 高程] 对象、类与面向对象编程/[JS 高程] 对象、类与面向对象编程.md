@@ -563,7 +563,7 @@ printPerson2('1st',person,'2nd')
 
 ## 2. 创建对象
 
-##### 1. 什么情况下需要面向对象的概念，传统的对象存在什么问题 ？
+### 1. 什么情况下需要面向对象的概念，传统的对象存在什么问题 ？
 
 在提及面向对象的概念之前，JavaScript 中创建一个对象通常有两种方式去创建一个对象，分别是通过字面量和通过`new Object()` 的方式去创建。 
 
@@ -591,9 +591,9 @@ let person2 = createPerson("Grep",27,"Doctor");
 
 > 函数 createPerson()接收三个参数， 根据这几个参数构建了一个包含Person 信息的对象。 可以根据不同的参数多次调用这个函数， 这种工厂模式虽然可以解决创建类似对象的问题，但是**没有解决对象标识问题** （**即新创建的对象是什么类型**）。
 
-##### 2. 构造函数模式
+### 2. 构造函数模式
 
-###### 2.1 定义构造函数
+#### 2.1 定义构造函数
 
 ES5.1 引入了构造函数和原型继承的特性， 使得我们可以利用构造函数解决上述 **对象标识的问题**。
 
@@ -620,7 +620,7 @@ person2.sayName(); //  Greg
 
 > 且注意，为了区分普通函数，构造函数`Person` 的首字母大写了， 但是*小写在语法层面是合法的*。
 
-###### 2.2 实例化对象
+#### 2.2 实例化对象
 
 上例中，通过`new` 操作符去 调用 构造函数，以创建一个`Person` 实例， 实际上会执行以下操作:
 
@@ -630,9 +630,24 @@ person2.sayName(); //  Greg
 4. 执行构造函数内部的代码（给新对象添加属性）
 5. 如果构造函数返回 非空对象，则返回该对象；否则， 返回刚创建的新对象。 
 
+> <span style="color:red">关于对象的实例化，有一点特别要注意:  各个实例化对象上的属性和方法完全独立， 并不共享。 </span>
+>
+> ```javascript
+> function SuperType() {
+>   this.colors = ["red", "blue", "green"];
+> }
+> function SubType() {}
+> // 继承 SuperType
+> let ins1 = new SuperType();
+> let ins2 = new SuperType();
+> console.log(ins1, ins2, "--line8"); //['red', 'blue', 'green'],['red', 'blue', 'green']
+> ins1.colors.push("yellow");
+> console.log(ins1, ins2, "--line10");//['red', 'blue', 'green', 'yellow'], ['red', 'blue', 'green']
+> ```
+>
+> <span style="color:red">通过`new` 关键字实例化后，每个实例化对象的内存空都是独一无二的， 实例对象的属性和方法都是在自己的空间中存在的。</span>
 
-
-###### 2.3 构造函数模式的一些深入
+#### 2.3 构造函数模式的一些深入
 
 通过构造函数所实例化的对象中，都有一个 `constructor` 属性指向 Person, 如下所示：
 
@@ -679,7 +694,7 @@ console.log(person1 instanceof Object);// true
 
 这样，通过定义自定义构造函数，就可以确保实例被标识为特定类型。 这是相比于工厂模式的一个很大的好处。 
 
-###### 2.4 构造函数也是函数
+#### 2.4 构造函数也是函数
 
 构造函数与普通函数的唯一区别就是调用方式不同。 除此之外， 构造函数也是函数。 并没有把某个函数定义为构造函数的特殊语法。 任何函数只要使用 `new` 操作符调用就是构造函数， 而不是用`new` 操作符调用的函数就是普通函数。 比如: 
 
@@ -718,7 +733,7 @@ window.sayName();// jay
 
 
 
-###### 2.5 构造函数的问题
+#### 2.5 构造函数的问题
 
 ```javascript
 function Person(name, age, job){
@@ -761,7 +776,7 @@ ler person2 = new Person('tom','women','lawyer')
 
 所以为了解决这个问题的副作用， 我们需要通过原型牧师来解决。 
 
-##### 3. 原型模式
+### 3. 原型模式
 
 **每个函数都会创建一个 `prototype` 属性，这个属性是一个对象， 实际上，它就是通过调用构造函数创建的对象的原型。** 
 
@@ -785,7 +800,7 @@ person1.sayName(); //jay
 person2.sayName(); //tom
 ```
 
-###### 3.1 理解原型
+#### 3.1 理解原型
 
 无论何时， 只要创建一个函数，就会按照特定的规则为这个函数创建一个 `prototype` 属性（指向原型对象）。 默认情况下， 所有原型对象自动获得一个名为`constructor` 的属性，指回与之关联的构造函数。 对前面的例子而言。 `Person.prototype.constructor` 指向 `Person` 。 
 
@@ -852,7 +867,7 @@ person2.sayName(); //tom
 
 > **<u>关于 原型对象和实例对象以及Object 的关系更通俗的阐述，这部分内容请查看末尾的 [章节拓展](#章节拓展)</u>**
 
-###### 3.2 原型层级
+#### 3.2 原型层级
 
 **原型在用于在多个对象实例之间共享属性和方法的原理：** 逐级查找， 实例对象上有没有目标属性或者方法？  =>  原型对象上有没有 ？ => Object 原型对象上有没有 ？
 
@@ -877,7 +892,7 @@ person2.sayName(); //tom
 
 
 
-###### 3.3 对象枚举方法
+#### 3.3 对象枚举方法
 
 - **`in` 操作符：**
 
@@ -990,7 +1005,7 @@ person2.sayName(); //tom
   console.log(Object.getOwnPropertySymbols(o), "--line6");// [Symbol(k1),Symbol(k2)]
   ```
 
-###### 3.4 属性枚举顺序
+#### 3.4 属性枚举顺序
 
 1. `for-in` 循环
 2. `Object.keys()`
@@ -1025,7 +1040,7 @@ console.log(Object.getOwnPropertySymbols(o));//[Symbol(k1), Symbol(k2)]
 
 
 
-##### 4. 对象迭代
+### 4. 对象迭代
 
 ECMAScript7 新增了两个静态方法 ：
 
@@ -1049,7 +1064,7 @@ console.log(Object.entries(o));//[["foo","bar"],["bar",1],["qux",{}]]
 
 
 
-###### 4.1 其他原型语法
+#### 4.1 其他原型语法
 
 在前面的例子中，我们都通过 `Person.prototype.propertyX` 的方式以字面量的形式其创建新对象。 这样代码冗余且代码不好看。 为了解决这个问题，我们可以通过重写原型的方式去创建一个原型对象带有自定义属性或者方法的构造函数。 如下：
 
@@ -1142,7 +1157,7 @@ console.log(Person.prototype.constructor, "--line14");//ƒ Person() {} '--line14
 >
 > 
 
-###### 4.2 原型的动态性
+#### 4.2 原型的动态性
 
 因为从原型上搜索值的过程是动态的， 所以即使实例在修改原型之前已经存在，任何时候对原型对象所做的修改也会在实例上反映出来。 示例：
 
@@ -1286,6 +1301,146 @@ teacher.drink();//drink water
 在这个实例中， 为了实现 Teacher 继承 Person, 为了使得 teacher 这个实例化对象能够使用构造函数Person 中的 drink 方法。 我们通过将Teacher的原型对象 指向 Person 的实例化对象，从而使得，自teacher 对象的属性/方法查找，能够延升到 Teacher 的原型对象。
 
 
+
+#### 3.1.1 默认原型
+
+实际上， 原型链中还有一环。 默认情况下，所有引用类型都继承自 Object， 这也是通过原型链实现的。  **任何函数的默认原型都是一个 Object 的实例，** 这就意味着这个实例有一个内部指针指向了 Object.prototype。 这也是为什么自定义类型能够继承包括 `toString()` ， `valueOf()` 在内的所有默认方法的原因。 因此前面的例子还有额外一层继承关系。 下图展示了完整的原型链。
+
+![image-20220225091507070]([JS 高程] 对象、类与面向对象编程.assets/image-20220225091507070.png)
+
+SubType 继承 SuperType, 而 SuperType 继承 Object。 在调用 `instance.toString()` 时， 实际上时调用的是保存在 `Object.prototype` 上的方法。
+
+#### 3.1.2 原型与继承关系
+
+原型与实例的关系可以通过两种方式来确定：
+
+1. 使用`instanceof` 操作符
+2. 使用`isPrototypeOf()` 方法
+
+第一种方式，如果一个实例中的原型链中出现过相应的构造函数，则`instanceof` 返回 `true`
+
+```javascript
+console.log(instance instanceof Object);//true
+console.log(instance instanceof SuperType);//true
+console.log(instance instanceof SubType);//true
+```
+
+第二种方式，其调用者是原型链中的每个原型， 只要原型链中包含这个原型， 这个方法就会返回 `true`
+
+```javascript
+console.log(Object.prototype.isPrototypeOf(instance));//true
+console.log(SuperType.prototype.isPrototypeOf(instance));//true
+console.log(SubType.prototype.isPrototypeOf(instance));//true
+```
+
+#### 3.1.3 关于方法
+
+子类有时候需要覆盖父类的方法，或者增加父类没有的方法。为此，这些方法必须在原型赋值之后再添加到原型上。
+
+```javascript
+function SuperType(){
+    this.property = true;
+}
+SuperType.prototypr.getSuperValue = function(){
+    return this.property;
+}
+function SubType(){
+    this.subproperty = false;
+}
+// 继承 SuperType
+subType.prototype = new SuperType();
+// 新方法
+SubType.prototype.getSubValue = function(){
+    return this.subproperty;
+};
+// 覆盖已有的方法
+SubType.prototype.getSuperValue = function(){
+    return false;
+}
+
+let instance = new SubType();
+console.log(instance.getSuperValue());//2
+```
+
+#### 3.1.4 原型链的问题
+
+> @jayce问题1 ：  为什么对象原型属性，如果是一个引用类型会被多实例共享状态， 但是基本类型不会 ？
+>
+> ```javascript
+> //如：
+> function Person() {}
+> Person.prototype.numb = 111;
+> Person.prototype.arr = [0];
+> let a = new Person();
+> let b = new Person();
+> a.numb = 123;
+> a.arr.push(1);
+> 
+> console.log(b.numb, "--line19");//111;
+> console.log(b.arr, "--line20");// [0,1];
+> ```
+>
+> 答：因为这里`a.arr.push()` 不是赋值操作， 是对即存的属性值进行值操作。 
+>
+> ```javascript
+> function Person() {}
+> Person.prototype.numb = 111;
+> Person.prototype.arr = [0];
+> let a = new Person();
+> let b = new Person();
+> a.numb = 123;
+> a.arr = [1, 2, 3];
+> 
+> console.log(b.numb, "--line19"); //111;
+> console.log(b.arr, "--line20"); // [0];
+> ```
+>
+> @jayce问题2： 为什么构造函数内属性，则不会被多实例共享状态？
+>
+> ```javascript
+> function SuperType() {
+>   this.colors = ["red", "blue", "green"];
+> }
+> let ins1 = new SuperType();
+> let ins2 = new SuperType();
+> console.log(ins1, ins2, "--line8"); //['red', 'blue', 'green'],['red', 'blue', 'green']
+> ins1.colors.push("yellow");
+> console.log(ins1, ins2, "--line10");//['red', 'blue', 'green', 'yellow'], ['red', 'blue', 'green']
+> ```
+>
+> 这是因为，`ins1.colors === ins2.colors` 返回 `false` , 即两个实例中的同名属性，并不是同一个引用地址。
+>
+> 而为什么不同？见上文 [2.2 实例化对象](#2.2 实例化对象)
+
+原型链在实现继承的时候，有两个问题值得注意：
+
+**第一个问题：** 当原型中包含有引用值的时候， 该引用值会在所有实例间共享。
+
+```javascript
+function SuperType() {
+  this.colors = ["red", "blue", "green"];
+}
+function SubType() {}
+// 继承 SuperType
+SubType.prototype = new SuperType();
+
+let instance1 = new SubType();
+instance1.colors.push("black");
+let instance2 = new SubType();
+console.log(instance2.colors);// ['red', 'blue', 'green', 'black']
+```
+
+这个问题，实际上，易于解释为什么。 为了利用原型链实现继承，所以将 `SubType` 的 原型对象指向了 `SuperType` 的实例， 在实例化对象 `instance1` 之后， 向`instance1.colors` 执行`push` 操作， 而实际上， `instance1` 本身并不具有`colors` 属性，因此，沿着原型链，向上查找，而其`__proto__` 指针又指向了`SuperType` 的实例化对象， 所以就操作了该实例化对对象上的`colors` 属性。 同样的， `instance2` 也没有`colors` 属性， 沿着原型链，于是也访问到了同样的`colors` 属性。  所以，这个`colors` 被两个实例化对象访问到了， 也就是这里说的引用值共享。 
+
+下图简单的说明了这个问题中的关系：
+
+**第二个问题：**子类型在实例化的时候，不能给父类型的构造函数传参。 
+
+### 3.2 盗用构造函数
+
+#### 3.2.1 传递参数
+
+#### 3.2.2 盗用构造函数的问题
 
 
 

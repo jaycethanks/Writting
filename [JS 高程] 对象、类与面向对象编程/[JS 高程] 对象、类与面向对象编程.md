@@ -1438,6 +1438,8 @@ console.log(instance2.colors);// ['red', 'blue', 'green', 'black']
 
 **第二个问题：**子类型在实例化的时候，不能给父类型的构造函数传参。 
 
+这两个问题，导致原型链基本不会被单独使用。 
+
 ### 3.2 盗用构造函数
 
 为了解决原型包含引用值导致的继承问题， ”盗用构造函数“（constructor stealing） 的基础被提出，也称作”对象伪装“， ”经典继承“。
@@ -1512,9 +1514,111 @@ console.log(instance2.colors); // ['red', 'blue', 'green']
 
 #### 3.2.1 传递参数
 
-相比于使用
+相比于使用原型链，盗用构造函数的一个优点就是可以在子类构造函数中向父类构造函数传参。
+
+```javascript
+function SuperType(str) {
+  this.colors = ["red", "blue", "green"];
+  this.colors.push(str);
+}
+function SubType(str) {
+  // 继承 SuperType
+  SuperType.call(this, str);
+}
+
+let instance1 = new SubType("hello");
+console.log(instance1, "--line10");//['red', 'blue', 'green', 'hello']
+```
 
 #### 3.2.2 盗用构造函数的问题
+
+盗用构造函数的 主要缺点啊， 也是使用构造函数模式自定义类型的问题：必须在构造函数中定义方法，因此函数不能重用。 此外子类也不能访问父类原型上定义的方法， 因此所有类型只能使用构造函数模式。 由于存在这些问题， 盗用构造函数基本上也不能单独使用。 
+
+![image-20220303092302210]([JS 高程] 对象、类与面向对象编程.assets/image-20220303092302210.png)
+
+在这张图中，我们可以看出来为什么子类不能访问父类原型上定义的方法。
+
+按照原型链的规则， 当SubType的实例对象试图执行`sayColors()` 方法时， 由于对象本身没有定义该方法， 所以会视图去对象原型`__proto__`（`[[prototype]]`） 上查找， 也就是SubType构造函数中的`prototype` 原型对象，但是发现也没有。 
+
+我们可以看到，该原型对象和`SuperType` 的原型对象之间并无关联， 因此，无法访问到在`SuperType`的原型对象上定义的`sayColor` 方法。 
+
+`SubType` 的构造函数上的`SuperType.call(this)` 仅仅是调用了`SuperType` 这个函数。
+
+
+
+### 3.3 组合继承 （伪经典继承）
+
+组合继承，综合了原型链和盗用构造函数， 基本思路是：
+
+1. 使用原型链继承原型上的属性和方法
+2. 通过盗用构造函数继承实例属性
+
+优点是： 可以把方法定义在原型上以实现重用、又可以让每个实例 都有自己的属性。 
+
+```javascript
+function SuperType(name) {
+  this.name = name;
+  this.colors = ["red", "blue", "green"];
+}
+
+SuperType.prototype.sayName = function () {
+  console.log(this.name);
+};
+
+function SubType(name, age) {
+  // 继承属性
+  SuperType.call(this, name);
+
+  this.age = age;
+}
+
+// 继承方法
+SubType.prototype = new SuperType();
+
+SubType.prototype.sayAge = function () {
+  console.log(this.age);
+};
+
+let instance1 = new SubType("Nicholas", 29);
+instance1.colors.push("black");
+console.log(instance1.colors); // "red,blue,green,black"
+instance1.sayName(); // "Nicholas";
+instance1.sayAge(); // 29
+
+let instance2 = new SubType("Greg", 27);
+console.log(instance2.colors); // "red,blue,green"
+instance2.sayName(); // "Greg";
+instance2.sayAge(); // 27
+```
+
+在这个例子中，`SuperType` 构造函数定义了两个属性， `name` 和`colors`。 而它的原型上也定义了一个方法叫`sayName()`。 `SubType` 构造函数调用了 `SubperType` 构造函数，传入了 `name` 参数，然后又定义了自己的属性 `age`。 此外， `SubType.prototype` 也被赋值为`SuperType` 的实例。原型赋值之后，又在这个原型上添加了新方法`sayAge()`。  这样， 就可以创建两个`SubType` 实例， 让这两个实例都有自己的属性， 包括`colors` ， 同时还共享相同的方法。
+
+组合继承弥补了原型链和盗用构造函数的不足， 是`JavaScript` 中使用最多的继承模式。 而且组合继承也保留了`instanceof` 操作符 和 `isPrototypeOf()` 方法识别合成对象的能力。
+
+### 3.4 原型式继承
+
+现任PayPal高级JavaScript架构师，也是《JavaScript 语言精粹》的作者 —— Douglas Crockford 06年的时候，写了一篇文章 《JavaScript 中的原型式继承》 ，文中给出了一个函数 ：
+
+```javascript
+function object(o){
+    function F(){}
+    F.prototype = o;
+    return new F();
+}
+```
+
+这个 `object()` 函数会创建一个临时构造函数， 将传入的对象赋值给这个构造函数的原型，然后返回这个临时类型的一个实例。 本质上， `object()` 是对传入的对象执行了一次浅复制。示例：
+
+```javascript
+```
+
+
+
+
+
+### 3.5 寄生式继承
+
+### 3.6 寄生式组合继承
 
 
 

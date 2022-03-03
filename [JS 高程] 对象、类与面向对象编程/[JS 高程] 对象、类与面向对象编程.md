@@ -1434,11 +1434,85 @@ console.log(instance2.colors);// ['red', 'blue', 'green', 'black']
 
 下图简单的说明了这个问题中的关系：
 
+![image-20220301085130414]([JS 高程] 对象、类与面向对象编程.assets/image-20220301085130414.png)
+
 **第二个问题：**子类型在实例化的时候，不能给父类型的构造函数传参。 
 
 ### 3.2 盗用构造函数
 
+为了解决原型包含引用值导致的继承问题， ”盗用构造函数“（constructor stealing） 的基础被提出，也称作”对象伪装“， ”经典继承“。
+
+基本思路很简单：**在子类构造函数中调用父类构造函数**
+
+因为函数就是在特定上下文中执行代码的简单对象，所以可以使用`apply()` 和 `call()` 方法以新创建的对象为上下文执行构造函数。 
+
+```javascript
+function SuperType() {
+  this.colors = ["red", "blue", "green"];
+}
+function SubType() {
+  // 继承 SuperType
+  SuperType.call(this);
+}
+
+let instance1 = new SubType();
+instance1.colors.push("black");
+let instance2 = new SubType();
+console.log(instance1.colors); // ['red', 'blue', 'green', 'black']
+console.log(instance2.colors); // ['red', 'blue', 'green']
+```
+
+> 关于`call()` 方法
+>
+> ```javascript
+> const person = {
+>   fullName: function() {
+>     return this.firstName + " " + this.lastName;
+>   }
+> }
+> const person1 = {
+>   firstName:"John",
+>   lastName: "Doe"
+> }
+> const person2 = {
+>   firstName:"Mary",
+>   lastName: "Doe"
+> }
+> 
+> // This will return "John Doe":
+> person.fullName.call(person1);
+> 
+> // This will return "Mary Doe"
+> person.fullName.call(person2);
+> ```
+>
+> call 本身，就是调用的意思， 正常调用，`person.fullName()` 默认的this, 就是`person` 对象。 而如果需要在执行该方法的同时指定一个其他的对象为其`this`， 就需要使用`call()` 或者 `apply()` 方法。 
+
+以上代码执行过程描述：
+
+1. `SuperType()` 构造函数，函数体中通过`this` ，定义了`colors` 属性， 我们已经知道， `SuperType()` 构造函数，本身也是构造函数， 其中的`this` 指向了调用它的对象， 如果在全局作用域直接执行该方法：
+
+   ```javascript
+   function SuperType() {
+     this.colors = ["red", "blue", "green"];
+   }
+   SuperType();
+   console.log(window.colors);//["red", "blue", "green"]
+   ```
+
+   可以看到 `this` 指向 `window`
+
+2. `SubType()`  构造函数中， 当`SubType`被执行时，将会通过`call(this)` 去执行`SuperType()` 。 
+
+3. `SubType()` 通过`new` 关键字实例化对象，会将`SubType()` 函数体中的`this` 指向这个实例化的空对象， 即，`SuperType.call(this)` ，中的`this` 实际上会指向这个实例化的空对象， 且每当实例化一次，这个`this` 指向的都是一个新的空对象。 
+
+这就是为什么能继承自`SuperType()` 的属性， 且不共享状态的原因。
+
+
+
 #### 3.2.1 传递参数
+
+相比于使用
 
 #### 3.2.2 盗用构造函数的问题
 

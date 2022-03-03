@@ -1382,6 +1382,20 @@ console.log(instance.getSuperValue());//2
 >
 > 答：因为这里`a.arr.push()` 不是赋值操作， 是对即存的属性值进行值操作。 
 >
+> 问题的进一步抽象，下面这个是知乎的提问：
+>
+> ![image-20220303233530385]([JS 高程] 对象、类与面向对象编程.assets/image-20220303233530385.png)
+>
+> > 对其解释是：
+> > 具体来说这就是 ES 的约定
+> >
+> > 1. 原型仅用于属性的读取
+> > 2. 不应用于属性的修改和删除
+> >
+> > 如果从道理上来解释合理性的话
+> > 1. 读取的话，如果孩子身上没有的特性，希望从祖先身上继承
+> > 2. 赋值，这个操作，应该应该只响应自己，一个孩子突变了，不应该应该祖先，影响了祖先，祖先的其他孩子也一起被影响了
+>
 > ```javascript
 > function Person() {}
 > Person.prototype.numb = 111;
@@ -1399,7 +1413,7 @@ console.log(instance.getSuperValue());//2
 >
 > ```javascript
 > function SuperType() {
->   this.colors = ["red", "blue", "green"];
+> this.colors = ["red", "blue", "green"];
 > }
 > let ins1 = new SuperType();
 > let ins2 = new SuperType();
@@ -1610,6 +1624,26 @@ function object(o){
 这个 `object()` 函数会创建一个临时构造函数， 将传入的对象赋值给这个构造函数的原型，然后返回这个临时类型的一个实例。 本质上， `object()` 是对传入的对象执行了一次浅复制。示例：
 
 ```javascript
+function object(o) {
+  function F() {}
+  F.prototype = o;
+  return new F();
+}
+let person = {
+  name: "Nicholas",
+  friends: ["Shelby", "Court", "Van"],
+};
+let anotherPerson = object(person);
+let yetAnotherPerson = object(person);
+console.log(anotherPerson.prototype === yetAnotherPerson.prototype); //两个实例化对象的指向的原型对象是同一个
+anotherPerson.name = "Greg";
+anotherPerson.friends.push("Rob");
+yetAnotherPerson.name = "Linda";
+yetAnotherPerson.friends.push("Barbie");
+console.log(anotherPerson,yetAnotherPerson);//{name: 'Greg'},{name: 'Linda'} // name 是赋值操作，赋值操作不同于对象属性或者方法的访问，因此不遵循原型链查找规则 ，会直接对实例对象本身添加或者覆盖属性
+
+console.log(person.friends);//{"name": "Nicholas","friends": ["Shelby","Court","Van","Rob","Barbie"]} // 因为实例化对象指向的是同一个原型对象，而name 是赋值操作，不会影响到原型对象上的name属性，而
+//对这里的引用值类型是访问操作（修改），所以遵循原型链的查找规则， 所以原型对象上的引用值被修改了。 这也是前面说的原型对象上的引用值类型会被实例对象状态共享。
 ```
 
 

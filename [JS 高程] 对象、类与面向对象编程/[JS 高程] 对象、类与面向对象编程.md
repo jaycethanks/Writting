@@ -1341,7 +1341,7 @@ console.log(SubType.prototype.isPrototypeOf(instance));//true
 function SuperType(){
     this.property = true;
 }
-SuperType.prototypr.getSuperValue = function(){
+SuperType.prototype.getSuperValue = function(){
     return this.property;
 }
 function SubType(){
@@ -1506,7 +1506,7 @@ console.log(instance2.colors); // ['red', 'blue', 'green']
 
 以上代码执行过程描述：
 
-1. `SuperType()` 构造函数，函数体中通过`this` ，定义了`colors` 属性， 我们已经知道， `SuperType()` 构造函数，本身也是构造函数， 其中的`this` 指向了调用它的对象， 如果在全局作用域直接执行该方法：
+1. `SuperType()` 构造函数，函数体中通过`this` ，定义了`colors` 属性， 我们已经知道， `SuperType()` 构造函数，本身也是函数， 其中的`this` 指向了调用它的对象， 如果在全局作用域直接执行该方法：
 
    ```javascript
    function SuperType() {
@@ -1546,7 +1546,7 @@ console.log(instance1, "--line10");//['red', 'blue', 'green', 'hello']
 
 #### 3.2.2 盗用构造函数的问题
 
-盗用构造函数的 主要缺点啊， 也是使用构造函数模式自定义类型的问题：必须在构造函数中定义方法，因此函数不能重用。 此外子类也不能访问父类原型上定义的方法， 因此所有类型只能使用构造函数模式。 由于存在这些问题， 盗用构造函数基本上也不能单独使用。 
+盗用构造函数的 主要缺点， 也是使用构造函数模式自定义类型的问题：必须在构造函数中定义方法，因此函数不能重用。 此外子类也不能访问父类原型上定义的方法， 因此所有类型只能使用构造函数模式。 由于存在这些问题， 盗用构造函数基本上也不能单独使用。 
 
 ![image-20220303092302210]([JS 高程] 对象、类与面向对象编程.assets/image-20220303092302210.png)
 
@@ -1607,7 +1607,7 @@ instance2.sayAge(); // 27
 
 在这个例子中，`SuperType` 构造函数定义了两个属性， `name` 和`colors`。 而它的原型上也定义了一个方法叫`sayName()`。 `SubType` 构造函数调用了 `SubperType` 构造函数，传入了 `name` 参数，然后又定义了自己的属性 `age`。 此外， `SubType.prototype` 也被赋值为`SuperType` 的实例。原型赋值之后，又在这个原型上添加了新方法`sayAge()`。  这样， 就可以创建两个`SubType` 实例， 让这两个实例都有自己的属性， 包括`colors` ， 同时还共享相同的方法。
 
-组合继承弥补了原型链和盗用构造函数的不足， 是`JavaScript` 中使用最多的继承模式。 而且组合继承也保留了`instanceof` 操作符 和 `isPrototypeOf()` 方法识别合成对象的能力。
+**组合继承弥补了原型链和盗用构造函数的不足， 是`JavaScript` 中使用最多的继承模式**。 而且组合继承也保留了`instanceof` 操作符 和 `isPrototypeOf()` 方法识别合成对象的能力。
 
 ### 3.4 原型式继承
 
@@ -1646,11 +1646,45 @@ console.log(person.friends);//{"name": "Nicholas","friends": ["Shelby","Court","
 //对这里的引用值类型是访问操作（修改），所以遵循原型链的查找规则， 所以原型对象上的引用值被修改了。 这也是前面说的原型对象上的引用值类型会被实例对象状态共享。
 ```
 
-
-
-
+原型式继承的缺点也很明显， 就是传入临时构造函数`object` 的对象上的引用值类型会被共享。
 
 ### 3.5 寄生式继承
+
+与原型式继承比较接近的一种继承方式是**寄生式继承（parasitic inheritance）**, 也是Crockford 首倡的一种模式。 寄生式继承背后的思路类似于寄生构造函数和工厂模式：创建一个实现继承的函数， 以某种方式增强对象，然后返回这个对象。 基本的寄生继承模式如下：
+
+```javascript
+function object(o) { 
+  function F() {}  
+  F.prototype = o; 
+  return new F(); 
+} 
+function createAnother(original){
+  let clone = ojbect(original);//通过调用函数创建一个新会县
+  clone.sayHi = function(){//以某种当时增强这个对象
+    console.log("hi");
+  };
+  return clone;// 返回这个对象
+}
+```
+
+这段代码中，`createAnother()` 函数接收一个参数，就是新对象的基准对象。 这个对象 original 会被传给 `object()` 函数，然后将返回的新对象赋值给clone。 接着给clone 对象添加一个新方法 `sayHi()`。 最后返回这个对象。 可以像下面这样使用 `createAnother()` 函数：
+
+```javascript
+let person = {  
+  name: "Nicholas", 
+  friends: ["Shelby", "Court", "Van"] 
+}; 
+ 
+let anotherPerson = createAnother(person); 
+anotherPerson.sayHi();  // "hi" 
+```
+
+这个例子基于 person 对象返回了一个新对象。新返回的 anotherPerson 对象具有 person 的所
+有属性和方法，还有一个新方法叫 sayHi() 。 
+寄生式继承同样适合主要关注对象，而不在乎类型和构造函数的场景。 object() 函数不是寄生式
+继承所必需的，任何返回新对象的函数都可以在这里使用。 
+
+> :warning: 注意  通过寄生式继承给对象添加函数会导致函数难以重用，与构造函数模式类似。
 
 ### 3.6 寄生式组合继承
 

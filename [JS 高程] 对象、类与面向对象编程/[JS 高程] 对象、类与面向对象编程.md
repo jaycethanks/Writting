@@ -1686,7 +1686,46 @@ anotherPerson.sayHi();  // "hi"
 
 > :warning: 注意  通过寄生式继承给对象添加函数会导致函数难以重用，与构造函数模式类似。
 
+> @jayce:  其实就是名字吓唬人， 所谓寄生式继承，不过式在原型继承的基础上，加了个工厂模式的处理函数，在每个最终返回的对象上添加了一个方法而已。没什么高明之处。
+
 ### 3.6 寄生式组合继承
+
+先回顾一下上面提到的组合继承：
+
+```javascript
+function SuperType(name) {  
+  this.name = name; 
+  this.colors = ["red", "blue", "green"]; 
+} 
+ 
+SuperType.prototype.sayName = function() { 
+  console.log(this.name); 
+}; 
+ 
+function SubType(name, age){ 
+  SuperType.call(this, name);   // 第二次调用 SuperType() 
+ 
+  this.age = age; 
+} 
+ 
+SubType.prototype = new SuperType();   // 第一次调用 SuperType() 
+SubType.prototype.constructor = SubType; 
+SubType.prototype.sayAge = function() { 
+  console.log(this.age); 
+}; 
+```
+
+组合式继承存在效率问题。最主要的效率问题就是父类构造函数始终会被调用两次：一次实在创建子类原型的时候调用， 另一次是在子类构造函数中调用。这样会导致一个延升问题，上例中有两组`name` 和 `colors` 属性： 一组在实例上，另一组在`SubType` 原型上。 这是调用两次`SuperType` 构造函数的结果。好在有办法解决这个问题。
+
+寄生式组合继承，通过盗用构造函数继承属性，但使用原型链继承模式继承方法。 基本思路是bu通过调用父类构造构造函数给子类原型赋值，而是取得父类原型的一个副本。说到底就是使用寄生式继承来继承父类原型，然后将返回的新对象赋值给子类原型。 寄生式组合继承的基本模式如下：
+
+```javascript
+function inheritPrototype(subType,superType){
+    let prototype = object(superType.prototype);// 创建对象
+    prototype.constructor = subType;// 增强对象
+    subType.prototypr = prototype;//赋值对象
+}
+```
 
 
 

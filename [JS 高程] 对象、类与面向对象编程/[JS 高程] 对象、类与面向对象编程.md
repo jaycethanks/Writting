@@ -1106,7 +1106,7 @@ console.log(person1.constructor == Object); //true
 
 虽然`instanceof` 操作符还能可靠地返回值，但是我们不能再依赖 `constructor` 属性来识别类型了。如输出 2，3
 
-对于输出1，5； 由于在`Person.prototype`原型对象上已经找不到 `constructor` 属性了， 所以按照对象属性的查找规则， 所以会向上层查找，及Object, 因为自定义构造函数的原型对象就指向`Object`构造函数的原型对象， 关系在[下图](#P30 08- 原型链)中有很直观的描述。
+对于输出1，5； 由于在`Person.prototype`原型对象上已经找不到 `constructor` 属性了， 所以按照对象属性的查找规则， 所以会向上层查找，即Object, 因为自定义构造函数的原型对象就指向`Object`构造函数的原型对象， 关系在[下图](#P30 08- 原型链)中有很直观的描述。
 
 为了解决这个衍生问题，需要手动定义其`constructor` 属性，并指回其构造函数。 如下：
 
@@ -1127,7 +1127,7 @@ console.log(person1.constructor === Person.prototype.constructor, "--line13");//
 console.log(Person.prototype.constructor, "--line14");//ƒ Person() {} '--line14'
 ```
 
-> :warning: 以这种方式恢复`constructor` 属性，回创建一个`[[Enumerable]]` 为`true` 的属性。 （通过字面量并初始化值的方式创建对象属性， 默认其属性值属性Descriptors均默认为`true`）, 而原生`constructor` 属性默认是不可枚举的。
+> :warning: 以这种方式恢复`constructor` 属性，会创建一个`[[Enumerable]]` 为`true` 的属性。 （通过字面量并初始化值的方式创建对象属性， 默认其属性值属性Descriptors均默认为`true`）, 而原生`constructor` 属性默认是不可枚举的。
 >
 > ```javascript
 > let z = new Object();
@@ -1135,23 +1135,25 @@ console.log(Person.prototype.constructor, "--line14");//ƒ Person() {} '--line14
 > //{"writable": true,"enumerable": false,"configurable": true}
 > ```
 >
->  所以你需要手动的去恢复其`constructor`属性。
+> > 意味着，不可用过 for-in， 等方式去遍历。 Object.keys() 也不会返回。但是，`Object.getOwnPropertyNames()` 可以返回。
+>
+> 所以你需要手动的去恢复其`constructor`属性。
 >
 > ```javascript
 > function Person() {}
 > 
 > Person.prototype = {
->   constructor: Person,
->   name: "Nicholas",
->   age: 28,
->   job: "Software Enginner",
->   sayName() {
->     console.log(this.name);
->   },
+> constructor: Person,
+> name: "Nicholas",
+> age: 28,
+> job: "Software Enginner",
+> sayName() {
+>  console.log(this.name);
+> },
 > };
 > Object.defineProperty(Person.prototype,'constructor',{
->   enumerable: false,
->   value: Person
+> enumerable: false,
+> value: Person
 > })
 > ```
 >
@@ -1169,7 +1171,7 @@ Person.prototype.sayHi = function(){
 firend.sayHi();//hi
 ```
 
-以上代码先创建了一个`Person` 实例并保存在 firend中。 然后后面一条语句在 `Person.prototype` 上添加了一个名为 `sayHi()` 的方法。 虽然 friend 实例实在添加方法之前创建的，但是它仍然可以访问这个方法。 
+以上代码先创建了一个`Person` 实例并保存在 firend中。 然后后面一条语句在 `Person.prototype` 上添加了一个名为 `sayHi()` 的方法。 虽然 friend 实例是在添加方法之前创建的，但是它仍然可以访问这个方法。 
 
 :star: 之所以会这样， 主要原因是实例与原型之间松散的联系。 在调用 `friend.sayHi()` 时， 首先会从这个实例中搜索名为sayHi的属性。 在没有找到的情况下，运行时会继续搜索原型对象。因为实例和原型之间的链接就是简单的指针，而不是保存的副本，所以会在原型上找到`sayHi` 属性并返回这个属性保存的函数。 
 
@@ -1180,7 +1182,7 @@ firend.sayHi();//hi
 ```javascript
 function Person(){}
 
-let friend = new Person()
+let friend = new Person();
 Person.prototype = {
     constructor: Person,
     name: 'Nicholas',
@@ -1197,11 +1199,34 @@ friend.sayName(); // 错误
 
 ![image-20220223194119457]([JS 高程] 对象、类与面向对象编程.assets/image-20220223194119457.png)
 
-
+> ```javascript
+> //代码说明
+> function Person(){}
+> 
+> let friend = new Person();// 此时，friend的对象原型，所指向的原型对象， 是{constructor:Person}
+> 
+> //#tag:1
+> Person.prototype = {
+>     constructor: Person,
+>     name: 'Nicholas',
+>     age: 28,
+>     job: 'Software Engineer',
+>     sayName(){
+>         console.log(this.name);
+>     }
+> }
+> let friend2 = new Person();// 此时，friend2的对象原型，所指向的原型对象，是 #tag:1 处定义的对象 {#tag:1}。 (只是随便表示而已，为了方便文字说明，无规范)
+> 
+> friend.sayName(); // 错误
+> friend2.sayName();
+> 
+> // 由于sayName方法，定义在 {#tag:1} 对象。
+> // 所以friend2可以访问，但是 friend 不可访问
+> ```
 
 ## 3. 继承
 
-继承时面向对象编程中讨论最多的话题。 很多面向对象语言都支持两种继承： **接口继承和实现继承**。 前者只继承方法签名， 后者继承实际的方法。 接口继承在ECMAScript 中是不可能的， 因为函数没有签名。  **实现继承 是ECMAScript 唯一支持的继承方式**，而这主要是通过原型链实现的。 
+继承是面向对象编程中讨论最多的话题。 很多面向对象语言都支持两种继承： **接口继承和实现继承**。 前者只继承方法签名， 后者继承实际的方法。 接口继承在ECMAScript 中是不可能的， 因为函数没有签名。  **实现继承 是ECMAScript 唯一支持的继承方式**，而这主要是通过原型链实现的。 
 
 ### 3.1 原型链继承模式
 
@@ -1274,6 +1299,8 @@ console.log(instance.getSuperValue());// true
 >
 > ![image-20220224200127097]([JS 高程] 对象、类与面向对象编程.assets/image-20220224200127097.png)
 
+> 图中有一例错误， subType实例化对象上的值不是`property` 而是 `subProperty：true`。
+
 这是书中给到的图
 
 ![image-20220224200826422]([JS 高程] 对象、类与面向对象编程.assets/image-20220224200826422.png)
@@ -1289,7 +1316,7 @@ function Person() {
 function Teacher(name) {
   this.name = name;
   this.teach = function () {
-    console.log("teach always teaching", "--line8");
+    console.log("teacher always teaching", "--line8");
   };
 }
 Teacher.prototype = new Person();

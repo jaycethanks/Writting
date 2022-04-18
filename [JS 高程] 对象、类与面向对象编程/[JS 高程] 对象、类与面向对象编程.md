@@ -589,7 +589,7 @@ let person1 = createPerson("Nicholas",29."Software Engineer");
 let person2 = createPerson("Grep",27,"Doctor");
 ```
 
-> 函数 createPerson()接收三个参数， 根据这几个参数构建了一个包含Person 信息的对象。 可以根据不同的参数多次调用这个函数， 这种工厂模式虽然可以解决创建类似对象的问题，但是**没有解决对象标识问题** （**即新创建的对象是什么类型**）。
+> 函数 createPerson()接收三个参数， 根据这几个参数构建了一个包含Person 信息的对象。 可以根据不同的参数多次调用这个函数， 这种工厂模式虽然可以解决创建类似对象的问题，但是**没有解决对象标识问题** （**即新创建的对象是什么类型**）。他们都只是Object的实例。
 
 ### 2. 构造函数模式
 
@@ -610,6 +610,8 @@ let person1 = new Person("Nicholas",29."Software Engineer");
 let person2 = new Person("Greg",27."Doctor");
 person1.sayName(); //  Nicholas
 person2.sayName(); //  Greg
+person1 instanceof Person;// true
+person1 instanceof Object;// true
 ```
 
 > 这个例子中 `Person()` 构造函数代替了 `createPerson()` 工厂函数， 实际上，`Person()` 内部的代码跟 `createPerson()` 基本是一样的， 只是有如下区别：
@@ -636,15 +638,13 @@ person2.sayName(); //  Greg
 > function SuperType() {
 >   this.colors = ["red", "blue", "green"];
 > }
-> function SubType() {}
-> // 继承 SuperType
 > let ins1 = new SuperType();
 > let ins2 = new SuperType();
 > console.log(ins1, ins2, "--line8"); //['red', 'blue', 'green'],['red', 'blue', 'green']
 > ins1.colors.push("yellow");
 > console.log(ins1, ins2, "--line10");//['red', 'blue', 'green', 'yellow'], ['red', 'blue', 'green']
 > ```
->
+> 
 > <span style="color:red">通过`new` 关键字实例化后，每个实例化对象的内存空都是独一无二的， 实例对象的属性和方法都是在自己的空间中存在的。</span>
 
 #### 2.3 构造函数模式的一些深入
@@ -761,7 +761,7 @@ function Person(name, age, job){
     this.name = name;
     this.age = age;
     this.job = job;
-    this.sayName = sayNamel
+    this.sayName = sayName
 }
 function sayName(){
     console.log(this.name);
@@ -774,7 +774,7 @@ ler person2 = new Person('tom','women','lawyer')
 
 但是这样虽然解决了相同逻辑的函数重复定义的问题， 但是全局作用域也因此被搞乱了。 
 
-所以为了解决这个问题的副作用， 我们需要通过原型牧师来解决。 
+所以为了解决这个问题的副作用， 我们需要通过原型模式来解决。 
 
 ### 3. 原型模式
 
@@ -806,7 +806,7 @@ person2.sayName(); //tom
 
 <span style="color:red">在自定义构造函数的时候，原型对象默认只会获得`constructor` 属性， 其他所有方法都继承自`Object`。 每次调用构造函数创建一个新实例， 这个实例的内部`[[Prototype]]` 指针就会被赋值为构造函数的原型对象。 </span>
 
-> 脚本中没有访问这个`[[Prototype]]`特性的标准方式， 但是在流行的现代浏览器中，一般回在每个对象上暴露`__proto__` 属性， 通过这个属性可以访问对象的原型。 
+> 脚本中没有访问这个`[[Prototype]]`特性的标准方式， 但是在流行的现代浏览器中，一般会在每个对象上暴露`__proto__` 属性， 通过这个属性可以访问对象的原型。 
 
 
 
@@ -818,7 +818,7 @@ person2.sayName(); //tom
 >
 > - `Person` 的两个实例`person1`, `person2` 都只有一个内部属性 指回 `Person.prototype`, 而且两者都与构造函数没有直接关系。另外，虽然者两个实例都没有属性和方法，但是`person1.sayName()` 可以正常调用。 这是由于对象属性查找机制的原因。
 >
-> - **<span style="color:red">`isProtutypeOf()`</span> 方法：**虽然不是所有实现都对外暴露了`[[Prototype]]`， 但是可以使用 <span style="color:red">`isProtutypeOf()`</span>方法确定两个对象的这种关系
+> - **<span style="color:red">`isPrototypeOf()`</span> 方法：**虽然不是所有实现都对外暴露了`[[Prototype]]`， 但是可以使用 <span style="color:red">`isProtutypeOf()`</span>方法确定两个对象的这种关系
 >
 >   ```javascript
 >   console.log(Person.prototype.isPrototypeOf(person1));//true
@@ -827,7 +827,7 @@ person2.sayName(); //tom
 >
 >   本质上， `isPrototypeOf()` 会在传入参数的`[[Prototype]]` 指向调用它的对象时，返回 `true`
 >
-> - **<span style="color:red">`setPrototypeOf() `</span>方法：**<span style="color:red">ECMAScript 的 Object 类型有一个方法叫 `Object.getPrototypeOf()`，返回参数的内部特性 `[[Prototype]]` 的值，这是取得一个对象的原型的合法手段。 </span>
+> - **<span style="color:red">`getPrototypeOf() `</span>方法：**<span style="color:red">ECMAScript 的 Object 类型有一个方法叫 `Object.getPrototypeOf()`，返回参数的内部特性 `[[Prototype]]` 的值，这是取得一个对象的原型的合法手段。 </span>
 >
 >   ```javascript
 >   console.log(Object.getPrototypeOf(person1)) == Person.prototype);// true

@@ -1,6 +1,6 @@
 其实很简单，简单画一画就清楚了,大致的关系如下图示：
 
-![image-20220413174933997](echarts #多grid情况下，根据数据划分空间 #grid left right值自动计算.assets/image-20220413174933997.png)
+![image-20220429153853661](echarts #多grid情况下，根据数据划分空间 #grid left right值自动计算.assets/image-20220429153853661.png)
 
 ```json
 // 实例数据
@@ -70,23 +70,6 @@ dataSource: [
 ],
 ```
 
-```javascript
-grid: this.dataSource.map((it, index) => {
-    // console.log((100 / this.dataSource.length) * index + '%', '--line91')
-    let gap = 5 //间距
-    let length = this.dataSource.length // 数组长度
-    let width = (100 - gap * length - gap) / length // 每个grid的宽度,减去的gap 是最后一个grid的right值
-
-    let res = {
-        id: it.name,
-        left: (index + 1) * gap + index * width + '%',
-        right: 100 - (index + 1) * (gap + width) + '%',
-    }
-    console.log(res, '--line108')
-    return res
-}),
-```
-
 ![image-20220413174211735](echarts #多grid情况下，根据数据划分空间 #grid left right值自动计算.assets/image-20220413174211735.png)
 
 ![image-20220413174255426](echarts #多grid情况下，根据数据划分空间 #grid left right值自动计算.assets/image-20220413174255426.png)
@@ -104,11 +87,13 @@ grid: this.dataSource.map((it, index) => {
 > 
 > <script>
 > // import resize from "@/views/dashboard/mixins/resize";
+> import Color from '@/views/dashboard/css/theme.js'
 > 
 > export default {
 >   // mixins: [resize],
 >   props: {
 >     dataSource: {
+>       // 不直接传入轴数据 和 系列数据的原因是因为tooltip 需要展示额外的数据字段，ringRatio
 >       type: Array,
 >       default: () => [],
 >     },
@@ -119,6 +104,18 @@ grid: this.dataSource.map((it, index) => {
 >     }
 >   },
 >   computed: {
+>     // xAxisData: function () {
+>     //   // 从props 中取出轴数据
+>     //   return this.dataSource.map((it) => it.time)
+>     // },
+>     // seriesData1: function () {
+>     //   // 从props 中取出系列
+>     //   return this.dataSource.map((it) => it.count * 0.2)
+>     // },
+>     // seriesData2: function () {
+>     //   // 从props 中取出系列
+>     //   return this.dataSource.map((it) => it.amount)
+>     // },
 >   },
 >   watch: {
 >     // 监听数据变化，触发图表绘制刷新
@@ -146,20 +143,23 @@ grid: this.dataSource.map((it, index) => {
 >       let yAxis = []
 >       let xAxis = []
 >       let series = []
+>       let color = Color.ColorSeries
 > 
 >       _this.dataSource.forEach((it, index) => {
 >         function stucGrid() {
 >           // 构建grid数据
->           let gap = 5 //间距
+>           let gap = 20 //间距
+>           let margin = 3
 >           let length = _this.dataSource.length // 数组长度
->           let width = (100 - gap * length - gap) / length // 每个grid的宽度,减去的gap 是最后一个grid的right值
+>           let width = (100 - gap * (length - 1) - 2 * margin) / length // 每个grid的宽度,减去的gap 是最后一个grid的right值
 >           grid.push({
 >             id: it.name,
 >             top: 0,
 >             bottom: '10%',
->             left: (index + 1) * gap + index * width + '%',
->             right: 100 - (index + 1) * (gap + width) + '%',
+>             left: margin + index * (gap + width) + '%',
+>             right: 100 - (margin + index * (gap + width) + width) + '%',
 >           })
+>           console.log(grid, '--line80')
 >         }
 >         function strucyAxis() {
 >           let temp = Object.assign(
@@ -211,7 +211,7 @@ grid: this.dataSource.map((it, index) => {
 >               name: '＄',
 >               type: 'value',
 >               inverse: false,
->               boundaryGap: true,
+>               // boundaryGap: true,
 >               axisLine: {
 >                 show: true,
 >                 lineStyle: {
@@ -259,27 +259,28 @@ grid: this.dataSource.map((it, index) => {
 >             yAxisIndex: index,
 >             data: it.value.map((_it) => _it.value),
 >             label: {
->               show: false,
->               position: 'insideRight',
->               color: '#fff',
+>               show: true,
+>               position: 'right', //top / left / right / bottom / inside / insideLeft / insideRight / insideTop / insideBottom / insideTopLeft / insideBottomLeft / insideTopRight / insideBottomRight。
+>               // color: '#fff',
+>               formatter: '{c}' + '(' + it.currencySymbol + ')',
 >             },
->             barWidth: 8,
+>             barWidth: 20,
 >             itemStyle: {
->               barBorderRadius: 20,
+>               borderRadius: 8,
 >               color: new _this.$echarts.graphic.LinearGradient(
 >                 0,
 >                 0,
->                 0,
+>                 1,
 >                 1,
 >                 [
 >                   {
 >                     offset: 0,
->                     color: '#4383FF',
+>                     color: color[index],
 >                   },
 >                   {
 >                     offset: 1,
 >                     opacity: 0.5,
->                     color: '#4E54FF',
+>                     color: color[index] + '33',
 >                   },
 >                 ],
 >                 false
@@ -299,7 +300,7 @@ grid: this.dataSource.map((it, index) => {
 >         },
 >         tooltip: {
 >           trigger: 'axis',
->           backgroundColor: 'rgba(255, 255, 255, 0.7)',
+>           backgroundColor: Color.Tooltip_bg,
 >           axisPointer: {
 >             type: 'shadow',
 >           },
@@ -334,7 +335,5 @@ grid: this.dataSource.map((it, index) => {
 >   background-color: aqua;
 > }
 > </style>
-> 
 > ```
 >
-> 

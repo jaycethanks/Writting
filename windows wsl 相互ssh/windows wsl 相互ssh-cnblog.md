@@ -1,3 +1,4 @@
+﻿[toc]
 ## 1. Windows ,Wsl  相互 SSH 密码登录
 
 ### 1.1 双端开启Open-SSh服务
@@ -172,7 +173,7 @@ $ cd ~/.ssh/
    # jayce 为我自己wsl 用户名，172.21.215.48 是我自己的wsl 局域网ip
    ```
 
-   ![image-20220512222153199](windows wsl 相互ssh.assets/image-20220512222153199.png)
+   ![image-20220512222153199](windows%20wsl%20%E7%9B%B8%E4%BA%92ssh-cnblog.assets/1735896-20220513111541893-636751385.png)
 
 3. 将 ~/.ssh/temp/id_rsa.pub 追加到 ~/.ssh/authorized_keys 文件
 
@@ -212,7 +213,7 @@ $ cd ~/.ssh/
 
 > 如何确定你是否为管理用户？
 >
-> ![image-20220513092243947](windows%20wsl%20%E7%9B%B8%E4%BA%92ssh.assets/image-20220513092243947.png)
+> ![image](windows%20wsl%20%E7%9B%B8%E4%BA%92ssh-cnblog.assets/1735896-20220513111934072-1060936631.png)
 
 以下步骤基于你是 **管理用户**， 如果你是标准用户，或者有其他问题可以参看这篇文档 [OpenSSH 密钥管理](https://docs.microsoft.com/zh-cn/windows-server/administration/openssh/openssh_keymanagement)
 
@@ -238,7 +239,9 @@ $ cd ~/.ssh/
    icacls.exe "C:\ProgramData\ssh\administrators_authorized_keys" /inheritance:r /grant "Administrators:F" /grant "SYSTEM:F"
    ```
 
-   ![image-20220513101806107](windows%20wsl%20%E7%9B%B8%E4%BA%92ssh.assets/image-20220513101806107.png)
+   ![image](windows%20wsl%20%E7%9B%B8%E4%BA%92ssh-cnblog.assets/1735896-20220513112042846-1104181920.png)
+
+   
 
 3. 测试连接
 
@@ -322,7 +325,3 @@ $ sudo service ssh force-reload# 强制重载
 
 1. [OpenSSH 密钥管理](https://docs.microsoft.com/zh-cn/windows-server/administration/openssh/openssh_keymanagement)
 2. [Windows 10标准用户帐户和管理员帐户之间的区别](https://zh.theihccforum.com/difference-between-standard-user)
-
-
-
-

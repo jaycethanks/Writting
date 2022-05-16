@@ -1,0 +1,11 @@
+生成带时间戳的文件名：
+```bash
+$ mkdir [$(date +%F)]_Hello\n World
+# [2022-05-05]_Hello World
+```
+
+```bash
+$ touch $(date +%y%m%d)_Hello.txt
+# 220505_Hello.txt
+```
+

@@ -1,0 +1,435 @@
+﻿[TOC]
+
+# How Browser Works ?
+
+## 1. Navigation
+
+### 1.1 DNS Lookup
+
+导航的第一步就是 寻找资源的定位，例如当你访问 https://example.com ， 该 HTML 页面被 serve 在IP地址为 93.184.216.34 的服务器上。 如果你首次访问这个站点，那么必定会发生一次 DNS 查找。 
+
+你的浏览器，请求一次 DNS 查找，最终由 域名服务器 返回一个 IP 地址。 初次访问之后，**该IP 会被缓存一段时间**，这样避免了重复 DNS 查找， 加速了后续的子请求时间。
+
+
+
+通常 DNS 查找针对一个页面只会执行一次， 但是如果你的页面中有 其他的三方域名所引用的资源， 那么会多次查找。 
+
+![latency](https://img2022.cnblogs.com/blog/1735896/202205/1735896-20220526133115888-446252540.jpg)
+
+所有当页面中三方引用资源过多的时候， 移动端在网络不好的时候，可能会由于过多的 DNS 查找导致网页加载很慢。 
+
+
+
+
+
+### 1.2 TCP Handshake
+
+一旦知道了 IP 地址，浏览器将会通过 TCP 三次握手以在 **目标服务器** 和 **客户端浏览器** 之间建立一个连接。 
+
+TCP 三次握手的过程以 **SYN** , **SYN-ACK** , **ACK** 标识，这三次消息用于协商并在两台计算机之间启动TCP会话。
+
+
+
+### 1.3 TLS Negotiation#协商
+
+对于建立在 HTTPS 上的安全连接， 还需要 另一次 “握手”。 这个握手更确切的说是 **TLS 协商** #[TLS](https://developer.mozilla.org/en-US/docs/Glossary/TLS) negotiation，决定了后续的通信采取什么加密算法进行加密，以及服务器验证，并在真正传输数据前建立安全连接。 这意味着，在获取网页内容的请求真正被发送前，还需要三轮往返协商。 
+
+![ssl](https://img2022.cnblogs.com/blog/1735896/202205/1735896-20220526133115696-1956815134.jpg)
+
+TSL 协商以使连接安全，自然也会延迟页面加载的时间，但为了安全的，这些时间上的开销是值得的，因为在浏览器和web服务器之间传输的数据无法被第三方解密。
+
+
+
+
+
+## 2. Response
+
+一旦和 Web 服务器建立了连接，浏览器会发起一个 **初始化 HTTP GET 请求**#Initial HTTP GET Request。
+
+> 对于网站来说，通常是请求一个 HTML 文件
+
+ 一旦服务器接收到了请求，它会返回相关的响应头以及 HTML 的内容。 
+
+```html
+<!doctype HTML>
+<html>
+ <head>
+  <meta charset="UTF-8"/>
+  <title>My simple page</title>
+  <link rel="stylesheet" src="styles.css"/>
+  <script src="myscript.js"></script>
+</head>
+<body>
+  <h1 class="heading">My Page</h1>
+  <p>A paragraph with a <a href="https://example.com/about">link</a></p>
+  <div>
+    <img src="myimage.jpg" alt="image description"/>
+  </div>
+  <script src="anotherscript.js"></script>
+</body>
+</html>
+```
+
+**初始化请求** 的响应包含了接收到数据的第一个字节，[Time to First Byte](https://developer.mozilla.org/en-US/docs/Glossary/time_to_first_byte) (TTFB) 是用户请求发起，到接收到 HTML 数据第一个数据包的时间。 通常这个内容的 chunk 为 14KB。
+
+在上方的示例中，请求肯定远小于14KB， 但是被链接的资源直到浏览器在解析过程中遇到链接时才被请求，如下所述。
+
+### 2.1 TCP Slow Start / 14KB rule
+
+首个响应包的大小将会是 14KB, 这是  [TCP slow start](https://developer.mozilla.org/en-US/docs/Glossary/TCP_slow_start) 的一部分。 它是一个衡量网速的一个算法， Slow start 会使得后续数据包逐渐增加传送的数据量，直到能达到服务器能够承受的最大网络带宽。 
+
+![congestioncontrol](https://img2022.cnblogs.com/blog/1735896/202205/1735896-20220526133115412-213253549.jpg)
+
+
+
+这种 TCP 慢起始#slow start 的机制逐渐增加数据传送量的算法，能够避免网络拥阻。 
+
+
+
+### 2.2 [Congestion control](https://developer.mozilla.org/en-US/docs/Web/Performance/How_browsers_work#congestion_control)#拥阻控制
+
+当服务器以TCP数据包的形式发送数据时，用户的客户端通过返回确认信息(ack)来确认数据的传递。根据硬件和网络条件，连接的容量有限。如果服务器以太快的速度发送太多的包，它们将被丢弃。这也就意味着，没有ack。服务器将其注册为缺少ack。拥塞控制算法使用发送数据包流和ack来确定发送速率。
+
+
+
+**关于 TCP Slow Start 可以参看下方 [附属内容^1^](#附属内容^1^)**
+
+
+
+## 3. Parsing
+
+一旦浏览器接收到了数据的首个 chunk， 它就可以开始解析接收到的信息。 解析就是将接收的数据转化为 DOM 和 CSSOM 的过程， 被 renderer 用于在屏幕上绘制页面。 
+
+即使请求页面的 HTML 远大于首个 14KB 的数据包，浏览器还是会基于已有的数据，尝试解析数据，和尝试渲染。 这也是为什么对于web性能优化来说，在开始渲染一个页面时或者至少是一个页面模板，包含一切浏览器需要的东西是非常重要的。  也就是说在首个 14KB 大小的数据包中需要包含首屏渲染的 CSS 和 HTML.
+
+但是在屏幕渲染任何东西之前，HTML， CSS 和 JavaScript 必须先被解析 。
+
+
+
+### 3.1 Building the DOM tree
+
+我们在 **[critical rendering path](https://developer.mozilla.org/en-US/docs/Web/Performance/Critical_rendering_path)** 中描述了五个步骤。
+
+**critical rendering path** 的 **第一步**，处理 HTML 标记，并构建 DOM 树。 HTML 解析包含了  [tokenization](https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList) and tree construction. 
+HTML tokens 包括了开始和结束标签，同时还有 属性名，属性值。如果 document 编写的比较好，那么解析也会更快一些。 
+
+DOM 树描述了文档的内容，`<html>` 元素是文档树的第一个根节点，树描述了 不同标签的关系以及嵌套层级。  DOM 的节点越多，DOM 树的构建就越耗时。
+
+![dom](https://img2022.cnblogs.com/blog/1735896/202205/1735896-20220526133115199-1869602778.png)
+
+**当解析器发现了一个非块级元素资源，例如 图片，浏览器就会请求这些资源**，并继续解析。 当**遇到CSS 文件的时候，可以继续解析**， **但是  `<script>` 标签**——尤其是哪些没有 `async` 或者 `defer` 属性的标签，将会**阻塞页面的渲染**，并暂停HTML 的解析。 尽管 浏览器的 preload scanner#预加载扫描 加速了这一过程，但是过多的脚本仍然会导致瓶颈。 
+
+### 3.2 Preload scanner
+
+当浏览器构建DOM 树的时候，这个过程将会占用主线程， 这时候， *preload scanner* 将会解析可用的内容，提高 CSS， JavaScript， 字体等资源的请求优先级。多亏了 *preload scanner*， 我们才不用必须等到解析器找到外部资源的引用才请求它，它将会在后台检索资源，这样，当主HTML解析器到达所请求的资源时，它们可能已经在运行中了，或者已经被下载。 预加载扫描器提供的优化，减少了页面阻塞。
+
+```html
+<link rel="stylesheet" src="styles.css"/>
+<script src="myscript.js" async></script>
+<img src="myimage.jpg" alt="image description"/>
+<script src="anotherscript.js" async></script>
+```
+
+ 在这个示例中，当主线程 正在 解析 HTML 和 CSS 时， preload scanner 将会寻找 scripts 和 图片，并开始下载它们，为了确保脚本不会阻塞该过程，可以给`<script>` 添加 `async` 属性， 或者如果 JavaScript 的解析和执行的顺序很重要时，则添加 `defer` 属性。
+
+等待接收 CSS 并不会阻塞 HTML 的解析或者下载，但是他会阻塞 JavaScript， 因为 JavaScript 经常用于查询应用于元素的CSS 属性。 
+
+### 3.3 Building the CSSOM
+
+**critical rendering path** 的 **第二步**，就是处理 CSS 并构建 CSSOM 树（CSS 对象模型树）， 它和 DOM 很相似， DOM 和 CSSOM 都是树。 它们是单独的数据结构， 浏览器将 CSS 规则转变为它可以理解并处理的样式 map。 浏览器遍历 CSS 中的每个规则集， 基于CSS 选择器，创建一个有父亲，孩子，以及兄弟关系的节点树。
+
+与 HTML 一样，浏览器需要将接收到的 CSS 规则转换为它可以处理的内容， 因此，它重复 html 到对象的过程， 但是针对的是 CSS。 
+
+CSSOM 树包含了用户端样式表的样式。 浏览器从适用于节点的最通用规则开始，并通过应用更加具体的规则，递归的完成计算样式。 换句话说，它层叠了属性值。 
+
+构建 CSSOM 是非常非常快的，并且在当前的开发工具中不会以一种独特的颜色显示。 相反， 开发工具中的 "重新计算样式#Recalculate Style" 显示了解析CSS、 构造CSSOM树和递归计算样式所需的总时间。 在web性能优化方面，有一些更容易实现的目标，因为创建CSSOM 的总时间通常小于一次 DNS 查找的时间。 
+
+
+
+## 4. Other Processes
+
+### 4.1 JavaScript Compilation
+
+当 CSS 正被解析且 CSSOM 正被创建， 其他的静态资源， 包括 JavaScript 文件，也在下载（感谢 *preload scanner*）。 JavaScript 被解释#interpreted，编译#compiled，解析#parsed，并执行#executed。这些脚本被解析称为 AST(abstract syntax trees#抽象语法树)。 有一些浏览器引擎，将AST传递给 interpreter， 输出主线程执行的字节码。 这也通常称作 JavaScript 编译。
+
+
+
+### 4.2 Building the Accessibility Tree
+
+浏览器也会构建 [accessibility](https://developer.mozilla.org/en-US/docs/Learn/Accessibility) tree，用于辅助设备解析和解释内容。 AOM(accessibility object model#辅助对象模型) 很像 DOM 的语义化版本。当DOM 更新时， 浏览器也会更新 accessibility 树。 而辅助技术设备不能够修改 accessibility 树。
+
+屏幕阅读器不能够被访问，知道 AOM 被构建。 
+
+
+
+## 5. Render
+
+Rendering 步骤 包括了 样式，布局，绘制，在某些情况下还包括合成#compositing。 在解析#parsing 步骤所创建的CSSOM 和 DOM 树被组合#combined 成一个 渲染树#render tree, 然后计算所有可见元素的布局，接着，将其绘制到屏幕。 在某些情况下，内容可以被提升#promoted 到它们自己的层并被合并#composited, 通过在GPU上而不是CPU上绘制屏幕的部分内容来提高性能，释放主线程。
+
+### 5.1 Style
+
+**critical rendering path** 的 **第三步** 是结合 DOM 和 CSSOM 到一个渲染树。 计算样式树(或者渲染树) 以DOM 树的 根#root 作为结构的起点，遍历所有的可见节点。 
+
+标签不会被展示，像`<head>`,以及它的子节点，还有所有css 属性为`display:none` 的任意节点。  **但是属性为`visibility:hidden` 的节点会被包含在 渲染树中** 。因为它们会占据空间。 
+
+每个可见的节点都有自己的 CSSOM 应用到自身。 渲染树 hold 了所有的可见节点的内容以及计算样式 ——将所有相关样式匹配到DOM树中的每个可见节点，并根据CSS级联 #cascade 确定每个节点的计算样式。
+
+### 5.2 Layout
+
+**critical rendering path** 的 **第四步** 是在渲染树上运行布局，以计算每个节点的几何形状。 
+
+*Layout* #布局, 是确定渲染树中所有节点的宽度、高度和位置，以及确定页面上每个对象的大小和位置的过程。
+
+*Reflow* #回流，是对页面或整个文档的任何部分的后续大小和位置的确定。
+
+一旦渲染树被建立，布局开始。渲染树标识了要显示哪些节点(即使不可见)，以及它们的计算样式，但没有标识每个节点的尺寸或位置。为了确定每个对象的确切大小和位置，浏览器从渲染树的根开始并遍历它。
+
+在网页上，几乎所有东西都是一个box。不同的设备和不同的桌面偏好意味着无限数量的不同视口大小。在这个阶段，浏览器将可视区域的大小作为基础，决定所有不同box在屏幕上显示的尺寸。布局通常从主体开始，布局主体的所有后代的尺寸，每个元素的box model属性，为被替换的不知道尺寸的元素提供占位符空间，例如我们的图像。
+
+**第一次确定节点的大小和位置称为layout。随后重新计算节点大小和位置称为reflows。在我们的例子中，假设初始布局发生在图像返回之前。因为我们没有声明图像的大小，所以一旦知道图像的大小，就会有一个reflow。**
+
+
+
+### 5.3 Paint
+
+**critical rendering path** 的**最后一个步骤**，就是将单个节点绘制到屏幕， 首次绘制的时刻，被称作为 [first meaningful paint](https://developer.mozilla.org/en-US/docs/Glossary/first_meaningful_paint) 。In the painting or rasterization phase #在挥着或者栅格化阶段，浏览器将 layout 阶段计算的所有 box 转化为屏幕显示的实际像素。 绘制包括了将一个元素的所有可见部分绘制到屏幕的过程， 包括了text，color，border, shadow, 以及替换元素如 buttons, images。 浏览器需要非常快的去做这些。 
+
+为了确保流畅的滚动和动画， 所有占用了主线程的事情，例如样式计算，以及 reflow#回流 和 paint绘制,必须在16.67ms 内去完成。在2048 X 1536的分辨率下，iPad的屏幕可以显示超过3145,000像素。这是大量的像素，需要快速绘制。为了确保重新绘制#repainting 比初始绘制更快，屏幕上的绘图通常被分解成几个图层。如果出现这种情况，那么就需要合成。
+
+绘制#Painting 能够将layout tree#布局树种的元素分解到不同的图层，在GPU(而不是CPU的主线程)上提升内容的层次，可以提高 paint 和 repaint 的性能。有特定的属性和元素来实例化一个层，包括 `<video>` 和 `<canvas>` ，以及任何具有CSS属性不透明度、3D转换、将会改变的元素，以及其他一些。这些节点将被绘制到它们自己的层上，以及它们的后代层上，除非后代层由于上述一个(或多个)原因需要它自己的层。
+
+层确实可以提高性能，但在内存管理方面代价高昂，所以不应该作为web性能优化策略的一部分过度使用。
+
+
+
+### 5.4 Compositing
+
+当文档的不同部分#sections 在不同的图层被绘制的时候，相互重叠，合成是必要的， 以确保它们以正确的顺序绘制到屏幕上，并正确的呈现内容。 
+
+当页面继续加载资产时，可能会发生reflows(回想一下我们的例子中迟到的图片)。回流触发 repaint 和 re-composite 。如果我们定义了图像的大小，就没有必要 reflow 了，只有需要重新绘制的图层才会重新绘制#repainted，如果需要的话就进行合成。但我们没有包括图像大小! 从服务器获得图像后，呈现过程回到布局步骤并从那里重新启动。
+
+
+
+## 6. Interactivity
+
+一旦主线程完成了页面的绘制，您可能会认为我们就“万事俱备”了。事实并非如此。如果加载包含了JavaScript，并且它被正确地延迟#was correctly deferred了，并且只在onload事件触发后执行，那么主线程可能会很忙，无法进行滚动、触摸和其他交互。
+
+[Time to Interactive](https://developer.mozilla.org/en-US/docs/Glossary/Time_to_interactive) (TTI) 用于度量从首次请求，到DNS 查找 在到 SSL 连接，直到页面可交互这段时间的耗时。—— interactive是指在第一次内容绘制# [First Contentful Paint](https://developer.mozilla.org/en-US/docs/Glossary/First_contentful_paint)  之后，页面在50ms内响应用户交互的时间点。如果主线程被解析、编译和执行JavaScript占用，它就不可用，因此无法及时(小于50ms)响应用户交互。
+
+在我们的例子中，可能图片加载得很快，但可能另一个script.js文件是2MB，我们的用户的网络连接很慢。在这种情况下，用户可以非常快地看到页面，但在没有jank的情况下，用户无法滚动，直到脚本被下载、解析和执行。这不是一个好的用户体验。避免占用主线程，如本WebPageTest示例所示
+
+![visa_network](https://img2022.cnblogs.com/blog/1735896/202205/1735896-20220526133114860-278530400.png)
+
+在本例中，DOM内容加载过程耗时超过1.5秒，主线程在这段时间内被完全占用，对点击事件或屏幕点击没有响应。
+
+
+
+
+
+> translate @from [link](https://developer.mozilla.org/en-US/docs/Web/Performance/How_browsers_work#tls_negotiation).	
+>
+> 如果你对浏览器如何工作有进一步了解的需求，可以参看这里 ：[How Browsers Work: Behind the scenes of modern web browsers](https://www.html5rocks.com/en/tutorials/internals/howbrowserswork/)
+
+
+
+**总结**：
+
+浏览器如何工作的？ 
+
+换句话说，浏览器是怎么展示网页的？
+
+其大致的阶段可以分为**四个大的步骤**：
+
+```mermaid
+graph LR
+subgraph Step1
+A[用户访问URL]
+end
+subgraph Step2
+B[向目标服务器发起资源请求]
+end
+subgraph Step3
+C[接受到服务器的响应]
+end
+subgraph Step4
+D[解析响应数据渲染到屏幕]
+end
+A --> B --> C --> D
+```
+
+而这个过程，还可以被细化：
+
+例如 Step1 :
+
+```mermaid
+graph TB
+	subgraph Step1.用户访问URL
+		a1[Step1.1 用户通过地址栏或者url 访问域名地址]
+		a2[Step1.2 浏览器携带域名地址向域名服务器发起 DNS 查找]
+		a3[Step1.3 浏览器接收到域名服务器返回的实际目标服务器ip]
+		a4[Step1.4 浏览器尝试和目标ip服务器三次握手建立连接]
+		a5[Step1.5 如果目标服务器是HTTPS,那么还需要进行 TSL/SSL 协商才会建立连接]
+		a1 --> a2 --> a3 --> a4 --> a5   
+	end
+```
+
+而 Step4， 可以被 Critical Render Path (CRP ) 这个概念所总结：
+
+```mermaid
+graph LR
+	subgraph Critical Render Path 关键步骤
+		s1[DOM 构建] -->
+		s2[CSSOM 构建] -->
+		s3[Render Tree] -->
+		s4[Layout] -->
+		s5[Paint] 
+			
+	end
+```
+
+关于更过 CRP 部分，可以见下方的 [附属内容^2^](#附属内容^2^)
+
+
+
+
+
+
+
+# 附属内容^1^ : 
+
+## TCP Slow Start
+
+关于TCP Slow Start， 我们可以通过抓包工具 wireshark，结合 curl 命令行工具，看一看大概是怎么回事。 
+
+> 为什么要用curl ? 
+>
+> 因为我们只想要看一次HTTP请求的过程， 网页中的资源链接，在浏览器接收到HTML 文件，解析的时候才会开始发起请求，也叫做subrequest
+>
+> curl 是命令行工具，并不是浏览器，所以不会去解析HTML，因此也就不会产生subrequest 了。
+
+我的本地环境是wsl，wireshark 有专门的监听通道，点击 “开始捕获分组” 后，命令行：
+
+```bash
+$  curl https://www.cnblogs.com/jaycethanks/
+```
+
+然后暂停 捕获， 统计 -- TCP流图形 -- 时间序列(Stevens) , 类型 -- 吞吐量，就可以看到了：
+
+![image-20220525225206478](https://img2022.cnblogs.com/blog/1735896/202205/1735896-20220526133114590-1449454401.png)
+
+可以看到，随着时间的增加，吞吐量逐渐增大， 在整个数据从服务器发送到客户端，并不是一次传完的，而是分为了很多个 Segment, 每个 Segment 都是一个"测试"， 测试网络条件， 每次接受到数据， 客户端都会响应一个 ack，服务器会根据ack决定下一次 Segment 的大小。 这样做的目的能够降低网络拥阻。 他是 TCP 协议的一个特性。
+
+# 附属内容^2^
+
+## Critical rendering path
+
+Critical Render Path (关键渲染路径，***下文简称 CRP***) 就是浏览器，将HTML,CSS,JavaScript转换成屏幕上像素的一系列有序的步骤。 
+
+关键渲染路径 包括了 DOM (Document Object Model)， CSSOM(CSS Object Model), Render 树，以及Layout。
+
+DOM 在 HTML 被解析的时候被创建。 HTML 可能会请求 JavaScript，而这些请求反过来又有可能会改变 DOM。 HTML 中还有可能含有 样式内容，或者会请求外部样式表，这些样式则会被构建成 CSSOM。
+
+**浏览器引擎，将 DOM + CSSOM 结合在一起变作 Render Tree.** 而 Layout 决定了页面上一切元素的大小和位置， 一旦布局过程完成，紧接着就是将这些元素逐像素绘制到屏幕。
+
+优化 CRP 将提升渲染性能，进而缩短首次渲染的时间。 因此理解并优化 CRP 对于
+
+1. 保证 reflows 和 repaints 能够以60帧的频率执行；
+2. 确保用户交互性能
+3. 避免 [jank](https://developer.mozilla.org/en-US/docs/Glossary/Jank)
+
+来说，是关键。
+
+### Understanding CRP
+
+Web 性能包括了 ：服务器请求与响应、loading、scripting、rendering、layout、painting。
+
+1. 一个网页渲染，以一次 HTML 请求开始；
+2. 服务器返回 HTML —— 响应 header + data；
+3. 浏览器开始解析 HTML， 将接收的字节数据，转化为 DOM tree；
+   1. 当在解析过程中，每当浏览器发现了有链接到外部的资源，如 样式表，js脚本文件，或者内嵌的图片，就会发起请求。有些请求会阻塞，这就意味着，余下的 HTML 将暂停解析，直到请求的资源被处理完。这个 <u>解析HTML + 请求资源 + 构建DOM</u> 的过程。直到最后浏览器构建了 CSSOM。 
+   2. 当 DOM + CSSOM 构建完成，浏览器会将二者结合为 Render Tree, 计算所有可见内容的样式。
+   3. Render Tree 构建完成，就开始执行 layout，即布局步骤， 这期间，将会定义 Render Tree 上每个节点元素的大小和位置。 这个过程类似在构建 "蓝图"。 
+   4. 一但 布局 完成，浏览器就会将，所有元素节点绘制到 屏幕。
+
+
+
+#### 1. Document Object Model (DOM)
+
+**注意：** DOM 结构式渐进式的。 HTML 响应 -- tokens -- nodes -- DOM Tree。 单个 DOM 节点以 startTag token 开始， 以 endTag token 结束。节点包含了 HTML 元素所有相关的信息。  这些信息以tokens 描述。 Nodes 被关联到 一个基于 token 层级的 DOM tree，即如果 一组 startTag 和 endTag tokens 被嵌置于 另一组 startTag 和 endTags，那么就会得到一个嵌套的 Node, 这就是 DOM tree 的层级结构如何被定义的。 
+
+节点的数量越多，那么 CRP 接下来的处理就会越耗时，也就意味着性能会受影响。 
+
+
+
+#### 2. CSS Onject Model (CSSOM)
+
+DOM 包含了页面的所有内容， CSSOM则包含了DOM 所有的样式。 CSSOM 和 DOM 很近似，但是又不同。 DOM是渐进式的， 但是 CSSOM 不是。 CSS 阻塞渲染(#css is render blocking) : 浏览器阻塞页面渲染直到接收并处理完了所有的 CSS。 **而之所以CSS 会阻塞渲染，是因为 css 规则会被覆写， 因此 CSSOM还没有 完成之前，内容无法被正确渲染。**
+
+
+
+CSS 有它自己的一套规则去识别有效的 tokens。 别忘了 "CSS" 中的 "C" 表示 "Cascade(#级联)" 。当解析器将 tokens 转化为 nodes 的时候，后代节点将会继承父节点的部分样式， 所以HTML 的渐进(#incremental) 特性不会应用于 CSS。 CSSOM 在 CSS 被解析的时候得以创建， 但是直到 CSS 被完全解析完成之前，还无法构建 Render Tree。 因为后续的解析可能会覆盖之前解析的样式结果，被覆盖掉的样式不应该被渲染到屏幕。
+
+当谈及 样式选择器的性能， 更少的选择器规则会比更复杂的快。 例如， `.foo{}` 会比 `.bar .foo{}` 要快。 因为，当浏览器找到了 `.foo` ， 它还要去 DOM 中检查 `.foo` 是不是有一个名为 `.bar` 的祖先。 
+
+
+
+不过，如果你去测量 CSS 的解析时间，你会发现起始浏览器在CSS 的解析上的处理是非常快的。虽然 更多的选择器规则，意味着浏览器需要在 DOM tree 中遍历更多的 节点，但是这个开销通常是很小的。 所以针对选择器的优化通常是毫秒级别的提升。
+
+> 这里有一些其他的 CSS 优化，[ways to optimize CSS](https://developer.mozilla.org/en-US/docs/Learn/Performance/CSS)。
+
+
+
+#### 3. Render Tree
+
+Render Tree 是 DOM + CSSOM 的结合，浏览器会检查每个节点， 从 DOM tree 的 root 开始，并检测附着了哪些 CSS 样式规则。 
+
+Render Tree 只会捕获 可见的内容 (`visibility:hidden`会被捕获，但是`display:none` 不会)。
+
+通常`<head>` 标签中的信息都是不可见的。 因此`display:none` 所应用的节点及其后代节点，和没有可见内容的`<head>` 元素，都不会被捕获进 Render Tree。
+
+
+
+#### 4. Layout
+
+一旦渲染树被构建， 就可以进行 布局(#layout) 了。 布局是基于 屏幕的尺寸，布局步骤决定了元素该被如何定位，元素的宽高如何被定义，以及它们是如何相互关联的。 
+
+> 什么是元素的 width ? 块级元素，**默认的有一个 `100%` 的宽度定义**
+
+viewport 元数据标签，定义了 布局的视图区域宽度， 他将影响布局，如果没有定义，浏览器将会使用默认的宽度。 
+
+节点的数量越多，也就意味布局耗时会越多，
+
+为了减少布局事件的频率和持续时间，请批处理更新并避免使用box属性去实现动画。
+
+
+
+#### 5. Paint
+
+这是 CRP 的最后一步，将像素点绘制到屏幕。 一旦渲染树被创建，开始布局，像素就可以被绘制到屏幕上。 在 `window.onload` 之后，整个屏幕已经被绘制完成。 因为浏览器通常被优化为最小区域重绘(#repaint)，因此在 `load` 之后，仅屏幕上被影响的区域 会被 repainted 。
+
+
+
+### Optimizing for CRP
+
+提高页面的加载速度可以通过以下tips :
+
+1. 通过推迟(#defer) / 删除非关键资源的加载，以缩减关键资源的数量。
+2. 优化请求资源的大小
+3. 通过优化关键资源的下载顺序，从而缩短 the critical path length
+
+
+
+> transate @from https://developer.mozilla.org/en-US/docs/Web/Performance/Critical_rendering_path
+
+
+
+
+
+
+
+# **References**
+
+1. https://developer.mozilla.org/en-US/docs/Web/Performance/How_browsers_work#tls_negotiation
+2. https://developer.mozilla.org/en-US/docs/Web/Performance/Critical_rendering_path
+3. https://www.html5rocks.com/en/tutorials/internals/howbrowserswork/
+

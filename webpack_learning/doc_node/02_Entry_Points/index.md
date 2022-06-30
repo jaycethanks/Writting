@@ -113,10 +113,10 @@ module.exports = {
 >
 > 这时候针对多入口的配置，output 可以这样去指定：
 > ```javascript
->   output: {
->     path: path.resolve(__dirname, "dist"),
->     filename: "output_[name].js",
->   },
+> output: {
+>  path: path.resolve(__dirname, "dist"),
+>  filename: "output_[name].js",
+> },
 > ```
 >
 > 将会打包出 ： output_app.js , output_utils.js 
@@ -126,13 +126,15 @@ module.exports = {
 > const path = require('path');
 > 
 > module.exports = {
->     entry: './path/to/my/entry/file.js',
->     output: {
->         path: path.resolve(__dirname, 'dist'),
->         filename: 'my-first-webpack.bundle.js',
->     },
+>  entry: './path/to/my/entry/file.js',
+>  output: {
+>      path: path.resolve(__dirname, 'dist'),
+>      filename: 'my-first-webpack.bundle.js',
+>  },
 > }
 > ```
+>
+> ==像上面这种 有dependOn 的entry point 怎么打包为单个bundle?, 以及这里的dependOn 具体是什么意思，怎么用的？==
 
 
 
@@ -232,6 +234,8 @@ module.exports = {
 
 **为什么？** 这样你就可以在 `vendor.js` 中存入未做修改的必要 library 或者 文件 （例如 Bootstrap, jQuery, 图片等），然后将它们打包在一起成为单独的 chunk。内容哈希保持不变，这使浏览器可以独立地缓存他们，从而减少加载时间。
 
+> @jayce: ==是在说，配置多个entry point, 这样可以隔离开vendors,从而浏览器会缓存这些不变的vendors，从而达到减少加载时间的目的吗？ 可是，==
+
 > Tips
 >
 > 在 webpack < 4 的版本中，通常将 vendor 作为一个单独的入口起点添加到 entry 选项中，以将其编译为一个单独的文件 (与 CommonsChunkPlugin 结合使用)。
@@ -260,3 +264,4 @@ module.exports = {
 > Tips
 >
 > 根据经验： 每个HTML文档只使用一个入口起点。 具体原因请参阅[此 issue](https://bundlers.tooling.report/code-splitting/multi-entry/#webpack)。
+> ==@jayce附件目录中有该连接文章的翻译，但是还是没明白啥意思，不知道和这里说的有什么联系。==

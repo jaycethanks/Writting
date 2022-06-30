@@ -18,7 +18,7 @@ Webpack 的核心， 是一个现代JS 应用的静态资源打包器。
 - [Mode](https://webpack.js.org/concepts/#mode)
 - [Browser Compatibility](https://webpack.js.org/concepts/#browser-compatibility)
 
-本文档不会过于升入这些概念的背后原理， 如有需要可以参考一下资源：
+本文档不会过于深入这些概念的背后原理， 如有需要可以参考一下资源：
 
 - [Manually Bundling an Application](https://www.youtube.com/watch?v=UNMkLHzofQI)
 - [Live Coding a Simple Module Bundler](https://www.youtube.com/watch?v=Gc9-7PBqOC8)

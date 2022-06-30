@@ -1,17 +1,21 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const path = require("path");
 module.exports = {
   entry: {
+    index: "./src/index.js",
     utils: "./src/utils.js",
-    app: {
-      dependOn: "utils",
-      import: "./src/index.js",
-    },
+    jquery: "./src/lib/jquery.js",
+    lodash: "./src/lib/lodash.core.js",
+    underscore: "./src/lib/underscore-esm-min.js",
   },
   output: {
+    filename: "[name].[contenthash].bundle.js",
     path: path.resolve(__dirname, "dist"),
-    filename: "bundle.js",
     // filename: "output_[name].js",
   },
-  plugins: [new HtmlWebpackPlugin({ template: "./src/index.html" })],
+  plugins: [
+    new HtmlWebpackPlugin({ template: "./src/index.html" }),
+    new CleanWebpackPlugin(),
+  ],
 };

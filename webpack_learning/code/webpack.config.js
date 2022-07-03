@@ -1,5 +1,6 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const ConsoleLogOnBuildWebpackPlugin = require("./ConsoleLogOnBuildWebpackPlugin.js");
 const path = require("path");
 module.exports = {
   entry: {
@@ -17,5 +18,9 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({ template: "./src/index.html" }),
     new CleanWebpackPlugin(),
+    new ConsoleLogOnBuildWebpackPlugin({
+      key1: "hello world",
+      key2: "hello webpack",
+    }),
   ],
 };

@@ -1,20 +1,26 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const ConsoleLogOnBuildWebpackPlugin = require("./ConsoleLogOnBuildWebpackPlugin.js");
 const path = require("path");
 module.exports = {
   mode: "production",
+  watch: true,
   entry: {
     index: "./src/index.js",
   },
   output: {
     filename: "[name].[contenthash].bundle.js",
     path: path.resolve(__dirname, "dist"),
+    clean: true,
     // filename: "output_[name].js",
   },
   plugins: [
     new HtmlWebpackPlugin({ template: "./src/index.html" }),
-    new CleanWebpackPlugin(),
+    new ConsoleLogOnBuildWebpackPlugin({
+      key1: "hello world",
+      key2: "hello webpack",
+    }),
   ],
+
   module: {
     rules: [
       {

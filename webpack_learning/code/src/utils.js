@@ -1,1 +1,5 @@
-console.log("this is asdada utils", "--line1");
+function print() {
+  console.log("This is console from utils.print");
+}
+
+export default { print };

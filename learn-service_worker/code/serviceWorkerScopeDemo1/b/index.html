@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+  <head>
+    <title>Service Worker Scope DEMO1 PageB</title>
+  </head>
+  <body>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('../root-sw.js').then((reg)=>{
+          console.log(reg,'--line9');
+        })
+      }
+    </script>
+  </body>
+</html>

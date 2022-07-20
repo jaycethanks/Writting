@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "webpack": "webpack"
+    "webpack": "webpack --watch"
   },
   "dependencies": {
     "@babel/preset-env": "^7.18.6",

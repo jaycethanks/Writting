@@ -3,7 +3,7 @@ const ConsoleLogOnBuildWebpackPlugin = require("./ConsoleLogOnBuildWebpackPlugin
 const path = require("path");
 module.exports = {
   mode: "production",
-  watch: true,
+  // watch: true,
   entry: {
     index: "./src/index.js",
   },

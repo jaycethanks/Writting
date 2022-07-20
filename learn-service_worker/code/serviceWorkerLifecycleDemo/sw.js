@@ -2,7 +2,8 @@
 console.log('service worker 注册成功')
 
 self.addEventListener('install', () => {
-  // 安装回调的逻辑处理
+  // 一段一定会报错的代码
+  console.log(a.undefined)
   console.log('service worker 安装成功')
 })
 

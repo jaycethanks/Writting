@@ -47,7 +47,7 @@ Service Worker 文件可以任意命名，这个的实例为 `sw.js`, 其内容�
 
 > 利用 `lite-server` 、`local-web-server` 等web服务工具启动 页面， 或者使用 VS code 中的 `live-server` 插件，启动页面。在Chrome 浏览器中，可以 在 `Applications > Service Worker` 面板中看到当前 Service Worker 线程的状态。
 >
-> ![image-20220720103412063](1. Service Worker 简介.assets/image-20220720103412063.png)
+> ![image-20220720103412063](Service Worker 指南-1.assets/image-20220720103412063.png)
 
 如果调节当前网络状态为 [离线]， Service Worker 依然能够正常工作，所以通过这个例子可以发现， Service Worker 不仅是一个独立于主线程的工作线程，并且还是一个可以在离线环境下运行的工作线程。这也正是 PWA 的离线与缓存功能实现的可行性基础。
 
@@ -185,7 +185,7 @@ Service Worker 是有自己的作用域的， Service Worker 的作用域是一�
 
 从上面的代码可以看出 `navigator.serviceWorker.register()` 方法返回的是一个 Promise ， 这个 Promise 中 resolve 返回的是 Service Worker 注册成功后返回的 ServiceWorkerRegistration 对象。 其打印结果如下：
 
-![image-20220720135622492](1. Service Worker 简介.assets/image-20220720135622492.png)
+![image-20220720135622492](Service Worker 指南-1.assets/image-20220720135622492.png)
 
 ServiceWorkerRegistration 对象中的 scope 的值就是当前 Service Worker 的作用域，在这个示例中为 `http://127.0.0.1:5500/` 。
 
@@ -270,7 +270,7 @@ serviceWorkerScopeDemo
 
 上面代码将作用域指定为 `/a/`，运行后浏览器会报错，报错的内容如下图所示。
 
-![Service Worker 作用域报错信息](1. Service Worker 简介.assets/service_worker_scope_error.png)
+![Service Worker 作用域报错信息](Service Worker 指南-1.assets/service_worker_scope_error.png)
 
 通过报错信息知道 `sw.js` 文件所在的 URL 的 path 是 `/a/b/`，则默认的作用域和最大的作用域都是 `/a/b/`，不允许指定超过最大作用域范围的 `/a/` 为作用域。
 
@@ -330,7 +330,7 @@ serviceWorkerScopeDemo
 
 `http://127.0.0.1:5500/a/index.html` 页面（称为 A 页面）在 `/a/` 作用域下注册了一个 Service Worker，而 `http://127.0.0.1:5500/b/index.html` 页面（称为 B 页面）在 `/` 作用域下注册了一个 Service Worker，这种情况下 B 页面的 Service Worker 就可以控制 A 页面，因为 B 页面的作用域是包含 A 页面的最大作用域的，这个时候这种情况就称之为**作用域污染**，这时候就会出现如下图所示的情况，A 页面被两个 Service Worker 所控制。
 
-![image-20220720153551569](1. Service Worker 简介.assets/image-20220720153551569.png)
+![image-20220720153551569](Service Worker 指南-1.assets/image-20220720153551569.png)
 
 注意，需要分别用 live-server 启动这两个页面， 页面关闭，也不会自动清除。
 
@@ -554,7 +554,7 @@ window.SW_TURN_OFF = false
 
 先来了解下，什么是 Service Worker 的生命周期， 每个 Service Worker 都有一个独立于 Web 页面的生命周期，其示意图如下：
 
-![Service Worker 生命周期](1. Service Worker 简介.assets/service_worker_lifecycle.png)
+![Service Worker 生命周期](Service Worker 指南-1.assets/service_worker_lifecycle.png)
 
 1. 在主线程成功注册 Service Worker 之后，开始下载并解析执行 Service Worker 文件。执行过程中开始 安装 Service Worker， 在此过程中，会触发 worker 线程的 install 事件。
 2. 如果 install 事件回调成功执行（在install 回调中通常会做一些缓存读写的工作，可能会存在失败的情况），则开始激活 Service Worker， 在此过程中会触发 worker 线程的 activate 事件，如果 install 事件回调执行失败，则生命周期进入 Error 终结状态，终止生命周期。
@@ -652,7 +652,7 @@ service worker 抓取请求成功：http://127.0.0.1:5500/imgs/dog.jpg
 
 Service Worker 在内部都有一系列的工作流程，这些工作流程决定了开发者可以在 Service Worker 文件中如何进行开发。下图展示的是 Service Worker 工作流程图。
 
-![Service Worker 工作流程图](1. Service Worker 简介.assets/service_worker_process.png)
+![Service Worker 工作流程图](Service Worker 指南-1.assets/service_worker_process.png)
 
 实际上， Service Worker 首次注册或者有新版本触发更新的时候，才会重新创建一个 worker 工作线程并解析执行 Service Worker 文件，在这之后并进入 Service Worker 的安装和激活生命周期。
 
@@ -694,11 +694,11 @@ self.addEventListener('fetch', event => {
 
 示例运行结果如下图所示：
 
-![Service Worker install 回调中报错情况](1. Service Worker 简介.assets/service_worker_error_in_install.png)
+![Service Worker install 回调中报错情况](Service Worker 指南-1.assets/service_worker_error_in_install.png)
 
 从运行结果看，当 install 回调中的逻辑报错了，并不会影响 Service Worker 的生命周期继续向后推进，因为运行结果还是有 `激活成功`，甚至第二次刷新发现还能正常拦截请求。
 
-所以说并不是 intall 回调中出错了就会导致生命周期中断。由于 Service Worker 生命周期异步触发的特性，并不是像同步执行模式，如果报错就会中断执行。Service Worker 事件回调的参数是一个 ExtendableEvent 对象，在 Service Worker 中需要使用 `ExtendableEvent.waitUntil()` 方法来保证生命周期的执行顺序。该方法接收一个 Promise 参数，开发者通常会将安装的回调执行逻辑（如缓存的写入）封装在一个 Promise 里，如果操作报错应该通过 Promise 来 reject 错误，这样 Service Worker 就知道了安装失败，然后 Service Worker 就能中断生命周期。接下来修改 `sw.js` 代码如下所示：
+所以说并不是 intall 回调中出错了就会导致生命周期中断。由于 **Service Worker 生命周期异步触发**的特性，并不是像同步执行模式，如果报错就会中断执行。Service Worker 事件回调的参数是一个 ExtendableEvent 对象，在 Service Worker 中需要使用 `ExtendableEvent.waitUntil()` 方法来保证生命周期的执行顺序。该方法接收一个 Promise 参数，开发者通常会将安装的回调执行逻辑（如缓存的写入）封装在一个 Promise 里，如果操作报错应该通过 Promise 来 reject 错误，这样 Service Worker 就知道了安装失败，然后 Service Worker 就能中断生命周期。接下来修改 `sw.js` 代码如下所示：
 
 ```javascript
 // sw.js
@@ -723,7 +723,7 @@ self.addEventListener('fetch', event => {
 })
 ```
 
-这时候运行刷新页面的时候发现 Service Worker 的生命周期中断，而且没有执行 activate 事件回调。当将 `reject('安装失败')` 改成 `resolve('安装成功')` 的时候，会发现 Service Worker 能够顺利激活。事实上，`ExtendableEvent.waitUntil()` 方法扩展了事件的生命周期。在服务工作线程中，延长事件的寿命能够阻止浏览器在事件中的异步操作完成之前终止 worker 工作线程。
+这时候运行刷新页面的时候发现 Service Worker 的生命周期中断，而且没有执行 activate 事件回调。当将 `reject('安装失败')` 改成 `resolve('安装成功')` 的时候，会发现 Service Worker 能够顺利激活。事实上，**`ExtendableEvent.waitUntil()` 方法扩展了事件的生命周期**。在服务工作线程中，延长事件的寿命能够阻止浏览器在事件中的异步操作完成之前终止 worker 工作线程。
 
 在 install 事件回调被调用时，它把即将被激活的 worker 线程状态延迟为 installing 状态，直到传递的 Promise 被成功地 resolve。这主要用于确保：Service Worker 工作线程在所有依赖的核心 cache 被缓存之前都不会被安装。
 
@@ -739,11 +739,11 @@ self.addEventListener('fetch', event => {
 
 最直接的解释是每一个打开 `http://127.0.0.1:8000` 页面的浏览器标签都是一个终端，如下图所示。
 
-![Service Worker 终端](1. Service Worker 简介.assets/service_worker_clients.png)
+![Service Worker 终端](Service Worker 指南-1.assets/service_worker_clients.png)
 
 在手机端或者 PC 端浏览器，每新打开一个已经激活了 Service Worker 的页面，那 Service Worker 所控制的终端就新增一个，每关闭一个包含已经激活了 Service Worker 页面的时候（不包含手机端浏览器进入后台运行的情况），则 Service Worker 所控制的终端就减少一个，如上图打开了三个浏览器标签，则当前 Service Worker 控制了三个终端，通过 Chrome 浏览器 Devtools 的 `Applications -> ServiceWorker` 标签可以查看如下图所示 Service Worker 控制的三个终端。
 
-![Service Worker 终端列表](1. Service Worker 简介.assets/service_worker_clients_list.png)
+![Service Worker 终端列表](Service Worker 指南-1.assets/service_worker_clients_list.png)
 
 当刷新其中一个浏览器标签的时候，会发现一个奇怪的现象，当前的浏览器标签的控制台打印了一条信息如下所示：
 
@@ -760,58 +760,191 @@ service worker 抓取请求成功: http://127.0.0.1:8000/imgs/dog.jpg
 
 这主要是因为，所有的终端共用一个 worker 工作线程，当在 worker 线程中执行 `console.log()` 方法打印内容的时候，会作用到所有的终端，worker 工作线程和终端的关系如下图 4-12 所示。
 
-![Service Worker 工作线程和终端的关系](1. Service Worker 简介.assets/service_worker_with_client.png)
+![Service Worker 工作线程和终端的关系](Service Worker 指南-1.assets/service_worker_with_client.png)
 
 `console.log` 是浏览器提供的一种特殊的 I/O 操作，并不是常规操作。通常开发者不会这样来应用这种终端机制，一般而是借助 postMessage 机制来通过 worker 工作线程控制终端，worker 线程在某个生命周期回调 postMessage 给各个终端，终端预先绑定 onmessage 事件，回调处理 worker 线程发送过来的指令，可以做一些后台统计的相关工作，甚至可以用这种机制在 Service Worker 线程中，集中对所有终端的 UI 进行统一处理。
 
-### 3.4  clients.claim() 方法
 
-如果使用了 skipWaiting 的方式跳过 waiting 状态，直接激活了 Service Worker，可能会出现其他终端还没有受当前终端激活的 Service Worker 控制的情况，切回其他终端之后，Service Worker 控制页面的效果可能不符合预期，尤其是如果 Service Worker 需要动态拦截第三方请求的时候。
 
-为了保证 Service Worker 激活之后能够马上作用于所有的终端，通常在激活 Service Worker 后，通过在其中调用 `self.clients.claim()` 方法控制未受控制的客户端。`self.clients.claim()` 方法返回一个 Promise，可以直接在 `waitUntil()` 方法中调用，如下代码所示：\
+### 3.4  Waiting 状态
 
-```javascript
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    self.clients.claim()
-      .then(() => {
-        // 返回处理缓存更新的相关事情的 Promise
-      })
-  )
-})
+创建一个新的 demo 项目
+
+```bash
+.
+├── app.js
+├── imgs
+│   ├── animals.jpg
+│   ├── city.jpg
+│   ├── nature.jpg
+│   └── sports.jpg
+├── index.html
+└── sw.js
 ```
 
-> 注意： 很多开发者默认就在 Service Worker 文件中使用 `self.clients.claim()`。不建议这么绝对，还是要根据具体项目而定，主要看是否有激活 Service Worker 之后马上控制所有终端的需求。
+**index.html**
 
-### 3.5 Service Worker 更新原理
-
-在运行 serviceWorkerLifecycleDemo 的时候，之前提到过，在每次修改 Service Worker 文件的时候，如果需要刷新页面验证效果，都应提前在 Chrome Devtools 中手动 unregister 当前的 Service Worker，主要是因为修改 Service Worker 文件都会触发其更新，而 Service Worker 的更新过程比较复杂，为了区分首次安装、激活和更新触发的安装、激活，保证效果的一致性，所以才有此建议。那接下来重点地讲解一下 Service Worker 的更新原理，看看里面到底有什么门道。
-
-修改 serviceWorkerLifecycleDemo 的 `index.html` 中注册 `sw.js` 部分的逻辑，用于触发 Service Worker 的更新（当然也可以修改 Service Worker 文件的某些内容），如下所示：
-
-```javascript
-// 触发 Service Worker 的更新
-navigator.serviceWorker.register('./sw.js?v=20190401235959')
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="./app.js"></script>
+    <title>Document</title>
+  </head>
+  <body style="display: flex; flex-direction: column">
+    <button>Add An Image</button>
+    <img src="./imgs/animals.jpg" alt="" />
+  </body>
+</html>
 ```
 
-刷新页面之后控制台打印的内容只有 `注册成功`，说明更新 Service Worker 会重新解析执行 Service Worker 的 JavaScript 代码，会触发安装回调，但是没有完成激活。查看 Chrome Devtools 的 Service Worker 面板发现 Service Worker 确实卡在激活状态了，状态为 `waiting to activate`，如下图所示：
+**app.js**
 
-![Service Worker 更新 waiting 状态](1. Service Worker 简介.assets/service_worker_update_waiting.png)
+```javascript
+const APP = {
+  sw: null,
+  imgList: ["/imgs/city.jpg", "/imgs/nature.jpg", "/imgs/sports.jpg"],
+  count: 0,
+  init() {
+    document.querySelector("button").addEventListener("click", APP.addTitle);
+    APP.registerSW();
+  },
+  registerSW() {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").then(
+        (reg) => {
+          APP.SW = reg.installing || reg.waiting || reg.active;
+        },
+        (error) => {
+          console.log("Service Worker Registration Fialed: ", error);
+        },
+      );
+    }
+  },
+  addTitle() {
+    if (APP.count < 3) {
+      const img = document.createElement("img");
+      img.src = APP.imgList[APP.count];
+      APP.count++;
+      document.body.appendChild(img);
+    }
+  },
+};
 
-这就是更新 Service Worker 和首次安装 Service Worker 的一个区别所在。下面通过下图了解一下 Service Worker 更新的原理。
+document.addEventListener("DOMContentLoaded", APP.init);
 
-![Service Worker 更新原理](1. Service Worker 简介.assets/service_worker_update_process.png)
+```
 
-当浏览器监测到新的 Service Worker 更新之后，会重新进行注册、安装，当检测到当前的页面被激活态的 Service Worker 控制着的话，会进入 waiting 状态，之后可以有两种选择：
+**sw.js**
 
-1. 通过 skipWaiting 跳过 waiting 状态
-2. 在所有终端保持 waiting 状态，直到 Service Worker 对**所有**终端失去控制（关闭所有终端的时候）
+```javascript
+self.version = 0;
 
-通过运行 serviceWorkerLifecycleDemo 可以发现，将之前启动的三个终端全部关闭掉，然后再新开一个浏览器标签打开 `http://127.0.0.1:8000` 之后，会发现新的 Service Worker 已经激活成功。
+console.log("service worker rigistered success! ");
 
-还可以有另外一种方法，就是在 Chrome Devtools 中点击 “**skipWaiting**” 按钮，这样就会发现 Service Worker 直接进入了激活状态（反复测试 Demo，记得修改 Service Worker 内容或 URL 以触发 Service Worker 的更新）。
+self.addEventListener("install", (event) => {
+  console.log("install hook executed success!");
+});
 
-### 3.6  skipWaiting
+self.addEventListener("activate", (event) => {
+  console.log("activate hook executed success!");
+});
+
+self.addEventListener("fetch", (event) => {
+  console.log("service worker 抓取请求成功: " + event.request.url);
+});
+
+self.addEventListener("message", (event) => {});
+```
+
+本示例项目，期望首次页面加载，会加载一张图片，而后每点击一次按钮，会新增加一张图片。 
+
+此时页面首次 load :
+![image-20220721134704376](Service Worker 指南-1.assets/image-20220721134704376.png)
+
+可以看到，Service Worker 注册-安装-激活 的 `console` 都成功打印， 但是页面加载的这张图片的请求，没有被 `fetch` 监听器监听到，之前说了，这是由于 Service Worker 生命周期的异步执行的特点。 所以首次加载页面，加载了图片的同时，异步在执行 Service Worker 的初始化，所以就监听不到。 
+
+当页面再次刷新时，页面就能够监听到 这张图片的请求了：
+
+![image-20220721135055206](Service Worker 指南-1.assets/image-20220721135055206.png)
+
+并且，不再重复打印之前的 Service Worker 的注册-安装-激活 `console`， 因为这个过程在页面刷新前，之前的首次加载页面就已经完成了。 也正是已经有 Service Worker 的存在，所以刷新后的页面 图片 fetch 才会被监听到。
+
+
+
+
+
+如果有一个旧的 Service Worker, 当一个 Service Worker 被成功安装后，这个最新的 Service Worker 并不会立即生效，它会等待旧的 Service Worker 不再控制 `clients` （即各个页面）。这个 等待的过程，会被标记为 "waiting" 状态。这是浏览器为了确保在同一时间，始终仅有一个版本的 Service Worker 在工作。 
+
+这个 `waiting`  状态何时被标记 ？
+
+当 浏览器 diff 到 `sw.js` Service Worker 文件发生了变化，就会重新开始注册流程，
+
+在上例中，我们在 `sw.js` 中设定了一个 Service Worker 的全局变量： `self.version=0`,  为了更加直观的看到变化，我们在 "activate" 监听器的回调中将这个全局变量打印出来。 
+
+**sw.js**
+
+```diff
+self.version = 0;
+console.log(`service worker rigistered success!`);
+self.addEventListener("install", (event) => {
+  console.log("install hook executed success!");
+});
+
+self.addEventListener("activate", (event) => {
+- console.log("activate hook executed success!");
++ console.log(`activate hook executed success!  current version is ${self.version}.`);
+});
+
+self.addEventListener("fetch", (event) => {
+  console.log("service worker 抓取请求成功: " + event.request.url);
+});
+
+self.addEventListener("message", (event) => {});
+```
+
+手动 Unregister 掉当前 Service Worker, 先看看初始状态：
+
+<video src="common-files/2022-07-21 15-05-58.mp4"></video>
+
+> 可以看到输出为：
+>
+> 
+
+ 现在我们将其修改为 `self.version=1`， 然后保存, 观察
+
+<video src="common-files/2022-07-21 15-07-33.mp4"></video>
+
+> ```bash
+> # console 输出
+> service worker rigistered success!
+> sw.js:6 install hook executed success!
+> ```
+
+可以看到， 浏览器检测到了 Service Worker 文件 `sw.js` 改变，重新启动了一个 Service Worker （DevTools 中 Status 每个版本的 Service Worker 都被以 `#N` 标记） `#44 , 并且它在等待被激活。 从控制台中，我们也可以看到，仅打印了 `install .....`， 并没有执行到 activate, 当前新的 Service Worker 还没有被激活。 
+
+这说明当前激活的 Service Worker 还是上个版本的，最新的 Service Worker 并没有更新。
+
+默认的，需要用户关闭浏览器，再次打开浏览器访问页面，才会被更新。
+
+<video src="common-files/2022-07-21 15-32-51.mp4"></video>
+
+浏览器的这么做的目的是为了避免当前用户的关联操作受到影响， 这样即便 Service Worker 文件更新了，实际的 Service Worker 还是旧的版本，直到重新启动浏览器。 
+
+但是这个机制在开发阶段会很难受，所以 DevTools 提供了便于开发的功能，
+
+1. 可以在DevTools 中 点击 `skipWaiting` 手动触发 
+2. 可以勾选 `Update on reload` 选项，页面刷新
+3.  shift-reload 强制刷新
+
+<video src="common-files/2022-07-21 15-35-39.mp4"></video>
+
+
+
+### 3.5  skipWaiting
 
 Service Worker 一旦更新，需要等所有的终端都关闭之后，再重新打开页面才能激活新的 Service Worker，这个过程太复杂了。通常情况下，开发者希望当 Service Worker 一检测到更新就直接激活新的 Service Worker。如果不想等所有的终端都关闭再打开的话，只能通过 skipWaiting 的方法了，但是总不能让用户自己去浏览器中点击 “skipWaiting” 按钮吧？
 
@@ -846,8 +979,69 @@ self.addEventListener('fetch', event => {
 通过调用 `skipWaiting()` 方法，运行 Demo 之后刷新任何一个页面都会发现，新的 Service Worker 被激活了。这种方式也被普遍应用在 Service Worker 的更新策略中，主要是为了让用户能够最快的体验到站点的升级和变化。
 
 > 注意： skipWaiting() 意味着新 Service Worker 可能会控制使用较旧 Service Worker 控制的页面。这意味着页面提取的部分数据将由旧 Service Worker 处理，而新 Service Worker 处理后来提取的数据。如果预期到缓存数据不一致的现象会导致问题，则不要使用 skipWaiting() 跳过 waiting 状态。
+>
+> @https://lavas-project.github.io/pwa-book/chapter04/3-service-worker-dive.html
+>
+> 
+>
+> **Caution**
+>
+> `skipWaiting()` means that your new service worker is likely controlling pages that were loaded with an older version. This means some of your page's fetches will have been handled by your old service worker, but your new service worker will be handling subsequent fetches. If this might break things, don't use `skipWaiting()`.
+>
+> @https://web.dev/service-worker-lifecycle/#devtools
 
-### 3.7  手动更新
+
+
+
+
+### 3.6 Service Worker 更新原理
+
+在运行 serviceWorkerLifecycleDemo 的时候，之前提到过，在每次修改 Service Worker 文件的时候，如果需要刷新页面验证效果，都应提前在 Chrome Devtools 中手动 unregister 当前的 Service Worker，主要是因为修改 Service Worker 文件都会触发其更新，而 Service Worker 的更新过程比较复杂，为了区分首次安装、激活和更新触发的安装、激活，保证效果的一致性，所以才有此建议。那接下来重点地讲解一下 Service Worker 的更新原理，看看里面到底有什么门道。
+
+修改 serviceWorkerLifecycleDemo 的 `index.html` 中注册 `sw.js` 部分的逻辑，用于触发 Service Worker 的更新（当然也可以修改 Service Worker 文件的某些内容），如下所示：
+
+```javascript
+// 触发 Service Worker 的更新
+navigator.serviceWorker.register('./sw.js?v=20190401235959')
+```
+
+刷新页面之后控制台打印的内容只有 `注册成功`，说明更新 Service Worker 会重新解析执行 Service Worker 的 JavaScript 代码，会触发安装回调，但是没有完成激活。查看 Chrome Devtools 的 Service Worker 面板发现 Service Worker 确实卡在激活状态了，状态为 `waiting to activate`，如下图所示：
+
+![Service Worker 更新 waiting 状态](Service Worker 指南-1.assets/service_worker_update_waiting.png)
+
+这就是更新 Service Worker 和首次安装 Service Worker 的一个区别所在。下面通过下图了解一下 Service Worker 更新的原理。
+
+![Service Worker 更新原理](Service Worker 指南-1.assets/service_worker_update_process.png)
+
+当浏览器监测到新的 Service Worker 更新之后，会重新进行注册、安装，当检测到当前的页面被激活态的 Service Worker 控制着的话，会进入 waiting 状态，之后可以有两种选择：
+
+1. 通过 skipWaiting 跳过 waiting 状态
+2. 在所有终端保持 waiting 状态，直到 Service Worker 对**所有**终端失去控制（关闭所有终端的时候）
+
+通过运行 serviceWorkerLifecycleDemo 可以发现，将之前启动的三个终端全部关闭掉，然后再新开一个浏览器标签打开 `http://127.0.0.1:8000` 之后，会发现新的 Service Worker 已经激活成功。
+
+还可以有另外一种方法，就是在 Chrome Devtools 中点击 “**skipWaiting**” 按钮，这样就会发现 Service Worker 直接进入了激活状态（反复测试 Demo，记得修改 Service Worker 内容或 URL 以触发 Service Worker 的更新）。
+
+### 3.7  clients.claim() 方法
+
+如果使用了 skipWaiting 的方式跳过 waiting 状态，直接激活了 Service Worker，可能会出现其他终端还没有受当前终端激活的 Service Worker 控制的情况，切回其他终端之后，Service Worker 控制页面的效果可能不符合预期，尤其是如果 Service Worker 需要动态拦截第三方请求的时候。
+
+为了保证 Service Worker 激活之后能够马上作用于所有的终端，通常在激活 Service Worker 后，通过在其中调用 `self.clients.claim()` 方法控制未受控制的客户端。`self.clients.claim()` 方法返回一个 Promise，可以直接在 `waitUntil()` 方法中调用，如下代码所示：\
+
+```javascript
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    self.clients.claim()
+      .then(() => {
+        // 返回处理缓存更新的相关事情的 Promise
+      })
+  )
+})
+```
+
+> 注意： 很多开发者默认就在 Service Worker 文件中使用 `self.clients.claim()`。不建议这么绝对，还是要根据具体项目而定，主要看是否有激活 Service Worker 之后马上控制所有终端的需求。
+
+### 3.8  手动更新
 
 当刷新页面重新执行 register 方法的时候，浏览器检测到 Service Worker 文件更新就会触发 Service Worker 更新，但是如果站点在浏览器后台长时间没有被刷新，则浏览器将自动检查更新，通常是每隔 24 小时检查一次，但是 24 小时也太长了，所以也可以在代码中手动触发更新，通常做法如下代码所示：
 
@@ -862,20 +1056,7 @@ navigator.serviceWorker.register('/sw.js')
 
 如果开发者期望用户可以长时间使用您的网站而不必重新加载，您需要按一定间隔（如每小时）调用 `update()` 方法。
 
-### 3.8  update on reload
 
-Service Worker 生命周期是专为用户构建的，这就给开发工作带来一定的困难。幸运的是，我们可借助 Chrome 的 Devtools 的 “update on reload” 功能，在开发调试 Service Worker 生命周期的时候非常友好。如下图所示。
-
-![Service Worker update on reload 功能](1. Service Worker 简介.assets/service_worker_update_on_reload.png)
-
-通过 update on reload 功能，开发者可以做到以下几点：
-
-1. 重新提取 Service Worker。
-2. 即使字节完全相同，也将其作为新版本安装，这表示运行 install 事件并更新缓存。
-3. 跳过 waiting 阶段，直接激活新 Service Worker。
-4. 浏览页面，每次浏览时（包括刷新）都将进行更新，无需重新加载两次或关闭标签。
-
-所以在测试 serviceWorkerLifecycleDemo 的时候，不妨试一下 update on reload 功能吧。
 
 
 
@@ -883,4 +1064,149 @@ Service Worker 生命周期是专为用户构建的，这就给开发工作带�
 
 本节介绍了 Service Worker 的生命周期以及更新机制，了解了 Service Worker 具体的运作方式。虽然目前对 Service Worker 技术点有了全面的了解，但是还是没有涉及到任何离线与缓存相关的东西，为了更加系统深入了解 PWA 离线缓存机制，在下一章中会对 Service Worker 缓存管理进行详细介绍。
 
-> https://lavas-project.github.io/pwa-book/chapter04/3-service-worker-dive.html
+
+
+
+
+## 4.  Service Worker 调试
+
+在开发 Service Worker 文件的过程中，如何调试呢？怎么才能确保线下开发的 Service Worker 文件在经过注册后到线上去运行是符合预期的呢？在这小节中将详细介绍如何调试 Service Worker。
+
+Service Worker 作为独立于主线程的独立线程，在调试方面其实和常规的 JavaScript 开发类似，通常开发者关注的点大概有如下几点：
+
+- Service Worker 文件 JavaScript 代码是否有报错。
+- Service Worker 能否顺利安装、激活或者更新。
+- 在不同机型上的兼容性是不是有问题。
+- 不同类型资源和请求的缓存策略的验证。
+
+### 4.1 debug 环境下的开发跳过等待状态
+
+根据 Service Worker 生命周期的特性，如果浏览器还在使用旧的 Service Worker 版本，即使有 Service Worker 新的版本也不会立即被浏览器激活，只能进行安装并进入等待状态，直到浏览器 Tab 标签被重新关闭打开。
+
+在开发调试 Service Worker 时，肯定希望重新加载后立即激活，通常开发者不希望每次都重新打开当前页面调试，为此可以在 `install` 事件发生时通过 `skipWaiting()` 来跳过 Service Worker 的 waiting 状态。这样每次 Service Worker 安装后就会被立即激活，通常在 `sw.js` 中实现如下代码所示：
+
+```js
+self.addEventListener('install', () => {
+  if (ENV === 'development') {
+    self.skipWaiting()
+  }
+})
+```
+
+### 4.2 借助 Chrome Devtool 进行调试
+
+使用 Chrome 浏览器，可以通过进入控制台 `Application -> Service Workers` 面板查看和调试。其效果如下图所示：
+
+![Chrome Devtools Service Worker 调试面板](Service Worker 指南-1.assets/chrome_debug.png)
+
+如果 Service Worker 线程已安装到当前打开的页面上，接下来会看到它将列示在此窗格中。例如：在上图中，展示的是在 `https://lavas-project.github.io/lavas-demo/news-v2/#/` 的作用域内安装了一个 Service Worker 线程。
+
+为了更熟练的运用 Chrome Devtools 调试 Service Worker，首先需要熟悉以下这些选项：
+
+- **Offline**： 复选框可以将 DevTools 切换至离线模式。它等同于 Network 窗格中的离线模式。
+- **Update on reload**：复选框可以强制 Service Worker 线程在每次页面加载时更新。
+- **Bypass for network**：复选框可以绕过 Service Worker 线程并强制浏览器转至网络寻找请求的资源。
+- **Update**：按钮可以对指定的 Service Worker 线程执行一次性更新。
+- **Push**：按钮可以在没有负载的情况下模拟推送通知。
+- **Sync**：按钮可以模拟后台同步事件。
+- **Unregister**：按钮可以注销指定的 Service Worker 线程。
+- **Source**：告诉当前正在运行的 Service Worker 线程的安装时间，链接是 Service Worker 线程源文件的名称。点击链接会将定向并跳转至 Service Worker 线程来源。
+- **Status**：告诉 Service Worker 线程的状态。此行上的数字指示 Service Worker 线程已被更新的次数。如果启用 `update on reload` 复选框，接下来会注意到每次页面加载时此数字都会增大。在状态旁边会看到 `start` 按钮（如果 Service Worker 线程已停止）或 `stop` 按钮（如果 Service Worker 线程正在运行）。Service Worker 线程设计为可由浏览器随时停止和启动。 使用 stop 按钮明确停止 Service Worker 线程可以模拟这一点。停止 Service Worker 线程是测试 Service Worker 线程再次重新启动时的代码行为方式的绝佳方法。它通常可以揭示由于对持续全局状态的不完善假设而引发的错误。
+- **Clients**：告诉 Service Worker 线程作用域的原点。如果已启用 `show all` 复选框，`focus` 按钮将非常实用。 在此复选框启用时，系统会列出所有注册的 Service Worker 线程。如果这时候点击正在不同标签中运行的 Service Worker 线程旁的 `focus` 按钮，Chrome 会聚焦到该标签。
+
+如果 Service Worker 文件在运行过程中出现了任何的错误，将显示一个 `Error` 新标签，如下图所示。
+
+![Chrome Devtools 中的 Service Worker 报错信息](Service Worker 指南-1.assets/chrome_debug_error.png)
+
+当然也可以直接访问 `Chrome://serviceworker-internals` 来打开 serviceWorker 的配置面板，查看所有注册的 Service Worker 情况。
+
+> 注意： 如无必要，不要选中顶部的 `Open DevTools window and pause javaScript execution on Service Worker startup for debugging` 复选框，否则每当刷新页面调试时都会弹出一个开发者窗口来。
+
+在 Firefox 中，可以通过 `Tools -> Web Developer -> Service Workers` 打开调试面板。也可以访问 `about:debugging#workers` 直接进入该面板。
+
+### 4.3 查看 Service Worker 缓存内容
+
+通过前面的章节已经了解过，Service Worker 使用 Cache API 进行缓存的读写，同样可以在 Chrome DevTools 上查看缓存的资源列表。
+
+Cache Storage 选项卡提供了一个已使用（Service Worker 线程）Cache API 缓存的只读资源列表，如下图所示。
+
+![Chrome Devtools 中展示的缓存列表](Service Worker 指南-1.assets/sw_cache.png)
+
+如果打开了两个或多个缓存，那在 Application 标签下的 Caches 面板将看到它们会陈列在 Cache Storage 下拉菜单下方，如下图所示。
+
+![Chrome Devtools  中展示多个缓存列表](Service Worker 指南-1.assets/multiple_caches.png)
+
+
+
+当然，Cache Storage 提供清除 Cache 列表的功能，在选择 `Cache Storage` 选项卡后在 Cache Storge 缓存的 key 的 item 上右键点击出现 `delete` ，点击 `delete` 就可以清除该缓存了，如下图所示。
+
+![Chrome Devtools 中清楚缓存内容](Service Worker 指南-1.assets/clear_caches.png)
+
+也可以选择 `Clear Storage` 选项卡进行清除缓存。
+
+### 4.4 网络跟踪
+
+此外经过 Service Worker 的 `fetch` 请求 Chrome 都会在 Chrome DevTools Network 标签页里标注出来，其中：
+
+- 来自 Service Worker 的内容会在 Size 字段中标注为 `from ServiceWorker`
+- Service Worker 发出的请求会在 Name 字段中添加 ⚙ 图标。
+
+如下图所示，第一个名为 `300` 的请求是一张 jpeg 图片， 其 URL 为 `https://unsplash.it/200/300`，该请求是由 Service Worker 代理的， 因此被标注为 `from ServiceWorker`。
+
+为了响应页面请求，Service Worker 也发出了名为 `300` 的请求（这是下图中第二个请求），但 Service Worker 把 URL 改成了 `https://unsplash.it/g/200/300`，因此返回给页面的图片是灰色的。
+
+![Service Worker 网络跟踪情况](Service Worker 指南-1.assets/service_worker_network.png)
+
+### 4.5 真机调试
+
+由于 Service Worker 必须要在 HTTPS 环境下才能被注册成功，所以在真机调试的过程中还需要解决 HTTPS 调试问题，当然 `127.0.0.1` 和 `localhost` 是被允许的 host，但是在真机调试上无法指定为到 PC 上的本地服务器，所以真机 debug 必须要求是已经部署好的 https PWA 站点。
+
+#### Android inspect 远程调试
+
+对于 Android 设备，可以借助于 Chrome 的 inspect 方法进行调试 PWA，其中有几个事项是需要提前准备的：
+
+- PC 上已安装 Chrome 32 或更高版本。
+- PC 上已安装 USB 驱动程序（如果使用 Windows），确保设备管理器报告正确的 USB 驱动程序。
+- 一根可以将 Android 设备连接至开发计算机的 USB 线。
+- 一台 Android 4.0 或更高版本的 Android 设备。
+
+接下来可以通过以下步骤进行调试：
+
+1. 将 Android 设备通过 USB 线与 PC 连接。
+2. 在 Android 设备上进行一些设置，选择 `设置 > 开发者选项 > 开启 USB 调试`。
+3. 在 PC 上打开 Chrome，使用一个 Google 帐户登录到 Chrome。（远程调试在隐身模式或访客模式下无法运行）。
+4. 在 PC 的 Chrome 浏览器地址栏输入 `chrome://inspect`。
+5. 在 `Remote Target` 下找到对应的 Android 设备。
+6. 点击远程设备链接进入 Chrome Devtools。
+
+这样的话就可以在 Chrome 的 Devtools 直接调试运行在 Android 手机端 Chrome 的 PWA 站点，体验完全和在本地 PC 电脑上 debug 一摸一样。
+
+#### iOS 远程真机调试
+
+对于 iOS 设备运行的 PWA，真机 debug 有点麻烦，好在 Apple Safari 也提供了一套远程调试的方案，可以借助于 Web Inspector（web 检查器）机制来完成真机调试。在开始调试之前需要准备以下工具：
+
+- 一台 Mac 电脑。
+- 一个 icloud 账号。
+- 一个 Apple 的移动设备（iPhone）。
+- 用 iCloud 账号登陆 Mac 和 iPhone。
+- 对 iPhone 进行设置：`设置 > Apple ID 用户中心入口 > iCloud > 打开 Safari`。
+- 对 iPhone 进行设置：`设置 > Safari浏览器 > 高级 > 打开 Web Inspector`。
+- 对 Mac 进行设置：` > 系统偏好设置 > iCloud > 勾上 Safari`。
+- 对 Mac 进行设置：`打开 Safari > Safari 菜单 > 偏好设置 > 高级 > 勾选“在菜单栏中显示开发菜单”`（这时候 Safari 的系统菜单栏多了一个 `开发` 标签）。
+
+当完成了准备工作后，下面可以开始调试了，调试步骤如下：
+
+1. 用 USB 线连接 iPhone 和 Mac。
+2. 在 iPhone 上打开 PWA 站点。
+3. 打开 Mac 上 Safari 菜单栏的 `开发` 标签，就可以点击进 `我的 iPhone`。
+4. 接下来会发现 `我的 iPhone` 子菜单里有在 iphone 上打开的 PWA 站点，这时候就可以用 Safari 的 Devtools 进行调试。
+
+
+
+
+
+**参考**
+
+- https://web.dev/service-worker-lifecycle/
+- https://lavas-project.github.io/pwa-book/chapter04/3-service-worker-dive.html
+- https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope/skipWaiting

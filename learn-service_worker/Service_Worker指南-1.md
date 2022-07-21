@@ -648,7 +648,9 @@ service worker 抓取请求成功：http://127.0.0.1:5500/imgs/dog.jpg
 - 首次注册成功的 Service Worker 没能拦截当前页面的请求。
 - 非首次注册的Service Worker 可以控制当前的页面并能拦截请求。
 
-<video src="common-files/2022-07-20 18-03-18.mp4"></video>
+![2022-07-20 18-03-18](Service_Worker指南-1.assets/2022-07-20 18-03-18.gif)
+
+
 
 Service Worker 在内部都有一系列的工作流程，这些工作流程决定了开发者可以在 Service Worker 文件中如何进行开发。下图展示的是 Service Worker 工作流程图。
 
@@ -908,7 +910,9 @@ self.addEventListener("message", (event) => {});
 
 手动 Unregister 掉当前 Service Worker, 先看看初始状态：
 
-<video src="common-files/2022-07-21 15-05-58.mp4"></video>
+![2022-07-21 15-05-58](Service_Worker指南-1.assets/2022-07-21 15-05-58.gif)
+
+
 
 > 可以看到输出为：
 >
@@ -916,7 +920,7 @@ self.addEventListener("message", (event) => {});
 
  现在我们将其修改为 `self.version=1`， 然后保存, 观察
 
-<video src="common-files/2022-07-21 15-07-33.mp4"></video>
+![2022-07-21 15-07-33](Service_Worker指南-1.assets/2022-07-21 15-07-33.gif)
 
 > ```bash
 > # console 输出
@@ -930,7 +934,9 @@ self.addEventListener("message", (event) => {});
 
 默认的，需要用户关闭浏览器，再次打开浏览器访问页面，才会被更新。
 
-<video src="common-files/2022-07-21 15-32-51.mp4"></video>
+![2022-07-21 15-32-51](Service_Worker指南-1.assets/2022-07-21 15-32-51.gif)
+
+
 
 浏览器的这么做的目的是为了避免当前用户的关联操作受到影响， 这样即便 Service Worker 文件更新了，实际的 Service Worker 还是旧的版本，直到重新启动浏览器。 
 
@@ -940,7 +946,9 @@ self.addEventListener("message", (event) => {});
 2. 可以勾选 `Update on reload` 选项，页面刷新
 3.  shift-reload 强制刷新
 
-<video src="common-files/2022-07-21 15-35-39.mp4"></video>
+![2022-07-21 15-35-39](Service_Worker指南-1.assets/2022-07-21 15-35-39.gif)
+
+
 
 
 

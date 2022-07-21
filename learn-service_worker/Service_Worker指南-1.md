@@ -47,7 +47,7 @@ Service Worker 文件可以任意命名，这个的实例为 `sw.js`, 其内容�
 
 > 利用 `lite-server` 、`local-web-server` 等web服务工具启动 页面， 或者使用 VS code 中的 `live-server` 插件，启动页面。在Chrome 浏览器中，可以 在 `Applications > Service Worker` 面板中看到当前 Service Worker 线程的状态。
 >
-> ![image-20220720103412063](Service Worker 指南-1.assets/image-20220720103412063.png)
+> ![image-20220720103412063](Service_Worker指南-1.assets/image-20220720103412063.png)
 
 如果调节当前网络状态为 [离线]， Service Worker 依然能够正常工作，所以通过这个例子可以发现， Service Worker 不仅是一个独立于主线程的工作线程，并且还是一个可以在离线环境下运行的工作线程。这也正是 PWA 的离线与缓存功能实现的可行性基础。
 
@@ -185,7 +185,7 @@ Service Worker 是有自己的作用域的， Service Worker 的作用域是一�
 
 从上面的代码可以看出 `navigator.serviceWorker.register()` 方法返回的是一个 Promise ， 这个 Promise 中 resolve 返回的是 Service Worker 注册成功后返回的 ServiceWorkerRegistration 对象。 其打印结果如下：
 
-![image-20220720135622492](Service Worker 指南-1.assets/image-20220720135622492.png)
+![image-20220720135622492](Service_Worker指南-1.assets/image-20220720135622492.png)
 
 ServiceWorkerRegistration 对象中的 scope 的值就是当前 Service Worker 的作用域，在这个示例中为 `http://127.0.0.1:5500/` 。
 
@@ -270,7 +270,7 @@ serviceWorkerScopeDemo
 
 上面代码将作用域指定为 `/a/`，运行后浏览器会报错，报错的内容如下图所示。
 
-![Service Worker 作用域报错信息](Service Worker 指南-1.assets/service_worker_scope_error.png)
+![Service Worker 作用域报错信息](Service_Worker指南-1.assets/service_worker_scope_error.png)
 
 通过报错信息知道 `sw.js` 文件所在的 URL 的 path 是 `/a/b/`，则默认的作用域和最大的作用域都是 `/a/b/`，不允许指定超过最大作用域范围的 `/a/` 为作用域。
 
@@ -330,7 +330,7 @@ serviceWorkerScopeDemo
 
 `http://127.0.0.1:5500/a/index.html` 页面（称为 A 页面）在 `/a/` 作用域下注册了一个 Service Worker，而 `http://127.0.0.1:5500/b/index.html` 页面（称为 B 页面）在 `/` 作用域下注册了一个 Service Worker，这种情况下 B 页面的 Service Worker 就可以控制 A 页面，因为 B 页面的作用域是包含 A 页面的最大作用域的，这个时候这种情况就称之为**作用域污染**，这时候就会出现如下图所示的情况，A 页面被两个 Service Worker 所控制。
 
-![image-20220720153551569](Service Worker 指南-1.assets/image-20220720153551569.png)
+![image-20220720153551569](Service_Worker指南-1.assets/image-20220720153551569.png)
 
 注意，需要分别用 live-server 启动这两个页面， 页面关闭，也不会自动清除。
 
@@ -554,7 +554,7 @@ window.SW_TURN_OFF = false
 
 先来了解下，什么是 Service Worker 的生命周期， 每个 Service Worker 都有一个独立于 Web 页面的生命周期，其示意图如下：
 
-![Service Worker 生命周期](Service Worker 指南-1.assets/service_worker_lifecycle.png)
+![Service Worker 生命周期](Service_Worker指南-1.assets/service_worker_lifecycle.png)
 
 1. 在主线程成功注册 Service Worker 之后，开始下载并解析执行 Service Worker 文件。执行过程中开始 安装 Service Worker， 在此过程中，会触发 worker 线程的 install 事件。
 2. 如果 install 事件回调成功执行（在install 回调中通常会做一些缓存读写的工作，可能会存在失败的情况），则开始激活 Service Worker， 在此过程中会触发 worker 线程的 activate 事件，如果 install 事件回调执行失败，则生命周期进入 Error 终结状态，终止生命周期。
@@ -652,7 +652,7 @@ service worker 抓取请求成功：http://127.0.0.1:5500/imgs/dog.jpg
 
 Service Worker 在内部都有一系列的工作流程，这些工作流程决定了开发者可以在 Service Worker 文件中如何进行开发。下图展示的是 Service Worker 工作流程图。
 
-![Service Worker 工作流程图](Service Worker 指南-1.assets/service_worker_process.png)
+![Service Worker 工作流程图](Service_Worker指南-1.assets/service_worker_process.png)
 
 实际上， Service Worker 首次注册或者有新版本触发更新的时候，才会重新创建一个 worker 工作线程并解析执行 Service Worker 文件，在这之后并进入 Service Worker 的安装和激活生命周期。
 
@@ -694,7 +694,7 @@ self.addEventListener('fetch', event => {
 
 示例运行结果如下图所示：
 
-![Service Worker install 回调中报错情况](Service Worker 指南-1.assets/service_worker_error_in_install.png)
+![Service Worker install 回调中报错情况](Service_Worker指南-1.assets/service_worker_error_in_install.png)
 
 从运行结果看，当 install 回调中的逻辑报错了，并不会影响 Service Worker 的生命周期继续向后推进，因为运行结果还是有 `激活成功`，甚至第二次刷新发现还能正常拦截请求。
 
@@ -739,11 +739,11 @@ self.addEventListener('fetch', event => {
 
 最直接的解释是每一个打开 `http://127.0.0.1:8000` 页面的浏览器标签都是一个终端，如下图所示。
 
-![Service Worker 终端](Service Worker 指南-1.assets/service_worker_clients.png)
+![Service Worker 终端](Service_Worker指南-1.assets/service_worker_clients.png)
 
 在手机端或者 PC 端浏览器，每新打开一个已经激活了 Service Worker 的页面，那 Service Worker 所控制的终端就新增一个，每关闭一个包含已经激活了 Service Worker 页面的时候（不包含手机端浏览器进入后台运行的情况），则 Service Worker 所控制的终端就减少一个，如上图打开了三个浏览器标签，则当前 Service Worker 控制了三个终端，通过 Chrome 浏览器 Devtools 的 `Applications -> ServiceWorker` 标签可以查看如下图所示 Service Worker 控制的三个终端。
 
-![Service Worker 终端列表](Service Worker 指南-1.assets/service_worker_clients_list.png)
+![Service Worker 终端列表](Service_Worker指南-1.assets/service_worker_clients_list.png)
 
 当刷新其中一个浏览器标签的时候，会发现一个奇怪的现象，当前的浏览器标签的控制台打印了一条信息如下所示：
 
@@ -760,7 +760,7 @@ service worker 抓取请求成功: http://127.0.0.1:8000/imgs/dog.jpg
 
 这主要是因为，所有的终端共用一个 worker 工作线程，当在 worker 线程中执行 `console.log()` 方法打印内容的时候，会作用到所有的终端，worker 工作线程和终端的关系如下图 4-12 所示。
 
-![Service Worker 工作线程和终端的关系](Service Worker 指南-1.assets/service_worker_with_client.png)
+![Service Worker 工作线程和终端的关系](Service_Worker指南-1.assets/service_worker_with_client.png)
 
 `console.log` 是浏览器提供的一种特殊的 I/O 操作，并不是常规操作。通常开发者不会这样来应用这种终端机制，一般而是借助 postMessage 机制来通过 worker 工作线程控制终端，worker 线程在某个生命周期回调 postMessage 给各个终端，终端预先绑定 onmessage 事件，回调处理 worker 线程发送过来的指令，可以做一些后台统计的相关工作，甚至可以用这种机制在 Service Worker 线程中，集中对所有终端的 UI 进行统一处理。
 
@@ -863,13 +863,13 @@ self.addEventListener("message", (event) => {});
 本示例项目，期望首次页面加载，会加载一张图片，而后每点击一次按钮，会新增加一张图片。 
 
 此时页面首次 load :
-![image-20220721134704376](Service Worker 指南-1.assets/image-20220721134704376.png)
+![image-20220721134704376](Service_Worker指南-1.assets/image-20220721134704376.png)
 
 可以看到，Service Worker 注册-安装-激活 的 `console` 都成功打印， 但是页面加载的这张图片的请求，没有被 `fetch` 监听器监听到，之前说了，这是由于 Service Worker 生命周期的异步执行的特点。 所以首次加载页面，加载了图片的同时，异步在执行 Service Worker 的初始化，所以就监听不到。 
 
 当页面再次刷新时，页面就能够监听到 这张图片的请求了：
 
-![image-20220721135055206](Service Worker 指南-1.assets/image-20220721135055206.png)
+![image-20220721135055206](Service_Worker指南-1.assets/image-20220721135055206.png)
 
 并且，不再重复打印之前的 Service Worker 的注册-安装-激活 `console`， 因为这个过程在页面刷新前，之前的首次加载页面就已经完成了。 也正是已经有 Service Worker 的存在，所以刷新后的页面 图片 fetch 才会被监听到。
 
@@ -1007,11 +1007,11 @@ navigator.serviceWorker.register('./sw.js?v=20190401235959')
 
 刷新页面之后控制台打印的内容只有 `注册成功`，说明更新 Service Worker 会重新解析执行 Service Worker 的 JavaScript 代码，会触发安装回调，但是没有完成激活。查看 Chrome Devtools 的 Service Worker 面板发现 Service Worker 确实卡在激活状态了，状态为 `waiting to activate`，如下图所示：
 
-![Service Worker 更新 waiting 状态](Service Worker 指南-1.assets/service_worker_update_waiting.png)
+![Service Worker 更新 waiting 状态](Service_Worker指南-1.assets/service_worker_update_waiting.png)
 
 这就是更新 Service Worker 和首次安装 Service Worker 的一个区别所在。下面通过下图了解一下 Service Worker 更新的原理。
 
-![Service Worker 更新原理](Service Worker 指南-1.assets/service_worker_update_process.png)
+![Service Worker 更新原理](Service_Worker指南-1.assets/service_worker_update_process.png)
 
 当浏览器监测到新的 Service Worker 更新之后，会重新进行注册、安装，当检测到当前的页面被激活态的 Service Worker 控制着的话，会进入 waiting 状态，之后可以有两种选择：
 
@@ -1097,7 +1097,7 @@ self.addEventListener('install', () => {
 
 使用 Chrome 浏览器，可以通过进入控制台 `Application -> Service Workers` 面板查看和调试。其效果如下图所示：
 
-![Chrome Devtools Service Worker 调试面板](Service Worker 指南-1.assets/chrome_debug.png)
+![Chrome Devtools Service Worker 调试面板](Service_Worker指南-1.assets/chrome_debug.png)
 
 如果 Service Worker 线程已安装到当前打开的页面上，接下来会看到它将列示在此窗格中。例如：在上图中，展示的是在 `https://lavas-project.github.io/lavas-demo/news-v2/#/` 的作用域内安装了一个 Service Worker 线程。
 
@@ -1116,7 +1116,7 @@ self.addEventListener('install', () => {
 
 如果 Service Worker 文件在运行过程中出现了任何的错误，将显示一个 `Error` 新标签，如下图所示。
 
-![Chrome Devtools 中的 Service Worker 报错信息](Service Worker 指南-1.assets/chrome_debug_error.png)
+![Chrome Devtools 中的 Service Worker 报错信息](Service_Worker指南-1.assets/chrome_debug_error.png)
 
 当然也可以直接访问 `Chrome://serviceworker-internals` 来打开 serviceWorker 的配置面板，查看所有注册的 Service Worker 情况。
 
@@ -1130,17 +1130,17 @@ self.addEventListener('install', () => {
 
 Cache Storage 选项卡提供了一个已使用（Service Worker 线程）Cache API 缓存的只读资源列表，如下图所示。
 
-![Chrome Devtools 中展示的缓存列表](Service Worker 指南-1.assets/sw_cache.png)
+![Chrome Devtools 中展示的缓存列表](Service_Worker指南-1.assets/sw_cache.png)
 
 如果打开了两个或多个缓存，那在 Application 标签下的 Caches 面板将看到它们会陈列在 Cache Storage 下拉菜单下方，如下图所示。
 
-![Chrome Devtools  中展示多个缓存列表](Service Worker 指南-1.assets/multiple_caches.png)
+![Chrome Devtools  中展示多个缓存列表](Service_Worker指南-1.assets/multiple_caches.png)
 
 
 
 当然，Cache Storage 提供清除 Cache 列表的功能，在选择 `Cache Storage` 选项卡后在 Cache Storge 缓存的 key 的 item 上右键点击出现 `delete` ，点击 `delete` 就可以清除该缓存了，如下图所示。
 
-![Chrome Devtools 中清楚缓存内容](Service Worker 指南-1.assets/clear_caches.png)
+![Chrome Devtools 中清楚缓存内容](Service_Worker指南-1.assets/clear_caches.png)
 
 也可以选择 `Clear Storage` 选项卡进行清除缓存。
 
@@ -1155,7 +1155,7 @@ Cache Storage 选项卡提供了一个已使用（Service Worker 线程）Cache 
 
 为了响应页面请求，Service Worker 也发出了名为 `300` 的请求（这是下图中第二个请求），但 Service Worker 把 URL 改成了 `https://unsplash.it/g/200/300`，因此返回给页面的图片是灰色的。
 
-![Service Worker 网络跟踪情况](Service Worker 指南-1.assets/service_worker_network.png)
+![Service Worker 网络跟踪情况](Service_Worker指南-1.assets/service_worker_network.png)
 
 ### 4.5 真机调试
 

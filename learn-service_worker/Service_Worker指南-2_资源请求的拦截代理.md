@@ -166,35 +166,42 @@ event.respondWith(Promise.reject(new Response('Hello World!')))
 因此在调用 `event.respondWith` 的时候，需要主动捕获并处理错误、处理异常返回结果。 我们可以封装一个 respond 方法来来处理响应的各种异常，处理异常的方式我们在这里选择一种比较简单的方式，那就是直接返回一个状态未 500 的 Response 对象：
 
 ```javascript
-function respond(event, handler) {
-  try {
-    // 执行响应处理方法，根据返回结果进行兜底
-    let res = handler(event.request);
-    // 异步的响应结果兜底
-    if (res instanceof Promise) {
-      let promise = res
-        .then((response) => {
-          // 如果返回结果非 Response 对象，抛出错误
-          if (!(response instanceof Response)) {
-            throw Error("返回结果异常");
-          }
-          return response;
-        }) // 异步响应错误处理，即直接返回状态码为 500 Response 对象
-        .catch(
-          () => new Response("Service Worker 出错", { status: 500 }),
-        );
-      event.respondWith(promise);
-      return;
-    }
+self.addEventListener("fetch", (event) => {
+  function respond(event, handler) {
+    try {
+      // 执行响应处理方法，根据返回结果进行兜底
+      let res = handler(event.request);
+      // 异步的响应结果兜底
+      if (res instanceof Promise) {
+        let promise = res
+          .then((response) => {
+            // 如果返回结果非 Response 对象，抛出错误
+            if (!(response instanceof Response)) {
+              throw Error("返回结果异常");
+            }
+            return response;
+          }) // 异步响应错误处理，即直接返回状态码为 500 Response 对象
+          .catch(
+            (error) =>
+              new Response("Service Worker 出错:" + error, { status: 500 }),
+          );
+        event.respondWith(promise);
+        return;
+      }
 
-    // 同步响应如果出现任何错误
-    // 可以选择不调用 event.respondWith(r)
-    // 让资源请求继续走浏览器默认的请求流程
-    if (res instanceof Response) {
-      event.respondWith(res);
-    }
-  } catch (e) {}
-}
+      // 同步响应如果出现任何错误
+      // 可以选择不调用 event.respondWith(r)
+      // 让资源请求继续走浏览器默认的请求流程
+      if (res instanceof Response) {
+        event.respondWith(res);
+      }
+    } catch (e) {}
+  }
+  if (event.request.url.indexOf("jpg") > 0) {
+    console.log(event.request.url, "--line43");
+    respond(event, () => Promise.resolve());
+  }
+});
 ```
 
 这样，前面提到的各类异常响应就不会导致控制台报错了：
@@ -213,15 +220,91 @@ respond(event, () => new Response('Hello World!'))
 respond(event, () => Promise.resolve(new Response('Hello World!')))
 ```
 
+> 注意，上面说的 “继续走浏览器默认的请求流程” 指的是，不被 Service Worker handle 了，走正常的网络请求， 因为
+>
+> ```javascript
+> respond(event, () => 'Hello World!')
+> respond(event, () => {throw Error('出现异常')})
+> ```
+>
+> 这两个实例，实际上什么都没有做，只是：
+>
+> ```javascript
+> let res = handler(event.request);
+> ```
+>
+> 把 `respond` 传入的第二个函数参数执行了一下而已， 这两个函数的执行，都没有被 `respondWith` 处理，所以压根就没有拦截，可以看作是，第二个函数参数，必须传入一个 `Promise` 或者 `Response` 对象，否则，直接丢弃掉。 其实说丢弃掉不合适，如果丢弃掉应该不对 , 因为实际上可以在第二个函数参数中，传入自定义的逻辑，例如：
+> ```javascript
+> function handler() {
+>     event.respondWith("Hello World");
+> }
+> respond(event, handler);
+> ```
+>
+> 这样就会报错，不过这样没有什么意义。
+
 这里展示的返回 500 只是其中一种处理方式，读者可以尝试改写成默认发起 fetch() 请求进行兜底。
 
 
 
+### 1.6  资源请求与响应操作的管理
+
+在 `fetch` 事件回调当中主要进行着资源请求匹配和响应结果返回的操作，可以把这个过程当做一个路由分发的问题，因此我们可以封装一个 Router 类来实现对路由的匹配规则和操作分发的统一管理。
+
+```javascript
+class Router {
+  constructor() {
+    // 存放路由规则
+    this.routes = [];
+    // 注册 fetch 事件拦截
+    this.initProxy();
+  }
+  initProxy() {
+    self.addEventListener("fetch", (event) => {
+      // 当拦截到资源请求时，会遍历已经注册的路由规则，并执行相应规则所对应的策略
+      for (let route of this.routes) {
+        // 使用前面封装好的 match 函数进行路由规则匹配
+        if (match(route.rule, event.request)) {
+          // 使用前面封装好的 respond 方法执行回调操作
+          respond(event, route.handler);
+          break;
+        }
+      }
+    });
+  }
+  registerRoute(rule, handler) {
+    this.routes.push({ rule, handler });
+  }
+}
+```
+
+有了这个 Router 类之后，开发者将只需要关心如何进行资源请求的规则匹配和相应操作的实现问题。 接下来使用 Router 来改写本节开始的示例：
+```javascript
+const router = new Router()
+router.registerRoute('/data.txt',()=> new Response('Hello World!')
+```
+
+### 1.7 小结
+
+本节内容主要介绍了如何在 Service Worker 中监听 `fetch` 事件来实现对资源请求拦截代理，介绍了如何通过 event.request 进行资源请求判断，如何通过 event.respondWith 实现对资源请求的响应。最后实现了 Router 类来实现对资源请求和响应操作的统一管理。在下一节，将会进一步探讨资源响应的策略。
+
+
+
+## 2. 前置预备内容
 
 
 
 
 
+
+
+
+
+## 2. 本地存储管理
+
+在上一节解决了如何对资源请求进行拦截代理后，要实现网页的离线缓存还需要解决本地存储的选择与管理问题。
+
+从前面的学习中，我们知道， 处于同一作用域下的网页共用一个 Service Worker 线程，这个 Service Worker 会同时处理来自不同页面的资源请求的拦截和响应，**因此基于性能上的考虑，Service Worker 在设计标准时就要求了任何耗时操作都必须异步实现。** 所以诸如 localStorage 之类的同步方法无法在 Service Worker 中使用， 而采用 Cache API 和 IndexedDB ，因为二者在功能的实现上全部采用了异步形式。
 
 
 

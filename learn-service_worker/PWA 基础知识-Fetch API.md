@@ -168,7 +168,7 @@ Response 的 body 属性 暴露了一个 ReadableStream 类型的响应体内容
 这些方法读取并解析响应体的数据流属于异步操作，因此这些方法均返回 Promise 对象，当读取数据流并解析完成时， Promise 对象将 resolve 并同时返回解析好的结果。 示例：
 
 ```javascript
-// 沟槽 Response 对象
+// 构造 Response 对象
 let response = new Response(JSON.stringify({ name: "lilei" }));
 
 // 通过 response.json() 读取请求体
@@ -332,3 +332,7 @@ self.addEventListener("fetch", (event) => {
 ![171527](PWA 基础知识-Fetch API.assets/171527.gif)
 
 可以看到，现在，请求被拦截并且由错误处理，返回了缓存中的资源。 
+
+## 小结
+
+![image-20220725100437654](PWA 基础知识-Fetch API.assets/image-20220725100437654.png)

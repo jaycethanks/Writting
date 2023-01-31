@@ -1,4 +1,6 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const RemarkHtml = require("remark-html");
+console.log(RemarkHtml);
 const ConsoleLogOnBuildWebpackPlugin = require("./ConsoleLogOnBuildWebpackPlugin.js");
 const path = require("path");
 module.exports = {

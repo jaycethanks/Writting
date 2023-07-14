@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="container-wrapper">
+      <div class="box">
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquid, repellat nesciunt, commodi culpa praesentium
+        voluptatibus autem est pariatur eligendi dolorum voluptas saepe excepturi vitae dolorem nisi! Quam mollitia
+        asperiores error ad deserunt fugit voluptas! Omnis sit voluptas at eligendi sapiente sint ipsa eaque, aliquid
+        obcaecati et doloremque possimus enim ut exercitationem impedit perferendis vel, dignissimos iure illum error
+        reiciendis, fuga autem. Quia dolorum minus laborum fugiat repellat, sapiente voluptatum officiis fugit culpa
+        eius vero cum nemo laboriosam saepe. Incidunt modi dolorem, amet accusantium nulla quidem voluptas? Deserunt,
+        voluptatem perspiciatis dolores velit at quia perferendis! Animi esse natus dolor quos ea!
+      </div>
+    </div>
+  </body>
+  <style>
+    body {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container-wrapper {
+      /* border: 5px solid rgb(0, 0, 0); */
+    }
+    .box {
+      height: 200px;
+      width: 200px;
+      border: 5px solid rgb(0, 0, 0);
+      margin: 20px;
+      padding: 20px;
+    }
+  </style>
+  <script>
+    const div = document.createElement('div');
+    const outerbox = document.querySelector('.box');
+    div.innerText = `
+    clientHeight: ${outerbox.clientHeight}
+    offsetHeight: ${outerbox.offsetHeight}
+    scrollHeight: ${outerbox.scrollHeight}
+    `;
+    document.body.appendChild(div);
+    // div.innerHTML
+  </script>
+</html>

@@ -202,7 +202,7 @@ export class CoffeesResolver {
 
 ```
 
-query的名称就是查询的字段， 通常我们会将这些名称解藕，让他更为通用
+query的名称就是查询的字段， 通常我们会将这些名称解藕，让他更为通用(别名 findAll <---> coffees )
 
 ```diff
 import { Query, Resolver } from '@nestjs/graphql';
@@ -212,7 +212,7 @@ import { Coffee } from './entities/coffee.entity/coffee.entity';
 export class CoffeesResolver {
 -  @Query(() => [Coffee])
 -  async coffees() {
-+  @Query(() => [Coffee,{name:'coffees'} ])
++  @Query(() => [Coffee],{name:'coffees'})
 +  async findAll() {
     return [];
   }
@@ -222,7 +222,7 @@ export class CoffeesResolver {
 
 这样，我们向外暴露的查询接口就是 `findAll`，  而在内部， grapqh 将会去映射处理 `coffees`
 
-![image-20230714172156276](index.assets/image-20230714172156276.png)
+![image-20230717120055963](index.assets/image-20230717120055963.png)
 
 #### 4. 对比 entity 和 生成的 schema 文件
 
@@ -314,4 +314,254 @@ export class Coffee {
 
 
 
+> ```ts
+> // src/coffees/entities/coffee.entity/coffee.entity.ts
+> import { Field, ID, ObjectType } from '@nestjs/graphql';
+> 
+> @ObjectType({ isAbstract: true, description: 'Coffee module' })
+> export class Coffee {
+>   @Field(() => ID, { description: 'A unique identifier' })
+>   id: number;
+>   name: string;
+>   brand: string;
+>   flavors: string[];
+> }
+> ```
+>
+> ```ts
+> // src/coffees/coffees.resolver.ts
+> import { Query, Resolver } from '@nestjs/graphql';
+> import { Coffee } from './entities/coffee.entity/coffee.entity';
+> 
+> @Resolver() // @Resolver 装饰器将一个类标识为 resolver, 意味这这个类，现在应该被 nestjs 的 GraphQL 模块所收集分析
+> export class CoffeesResolver {
+>   @Query(() => [Coffee], { name: 'coffees' })
+>   async findAll() {
+>     return [];
+>   }
+> }
+> ```
+>
+> 
+>
+> 将会生成以下 schema
+>
+> ```ts
+> # ------------------------------------------------------
+> # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+> # ------------------------------------------------------
+> 
+> """Coffee module"""
+> type Coffee {
+>   brand: String!
+>   flavors: [String!]!
+> 
+>   """A unique identifier"""
+>   id: ID!
+>   name: String!
+> }
+> 
+> type Query {
+>   findAll: [Coffee!]!
+>   sayHello: String!
+> }
+> ```
+>
+> 
+
  
+
+
+
+### 向 graphql handler 传入查询参数
+
+我们也可以在查询处理的方法中向图形查询传递任意数量的参数
+
+```ts
+  @Query(() => Coffee, { name: 'coffee' })
+  // 默认传入的参数 id 将会被解析为 string, 但是我们需要这个值是数字类型， 我们可以使用  ParseIntPipe 来解决这个问题
+  async findOne(@Args('id', { type: () => ID }, ParseIntPipe) id: number) {
+    return null;
+  }
+}
+```
+
+```ts
+// 当前生成的 schema src/schema.gql
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""Coffee module"""
+type Coffee {
+  brand: String!
+  flavors: [String!]!
+
+  """A unique identifier"""
+  id: ID!
+  name: String!
+}
+
+type Query {
+  coffee(id: ID!): Coffee!
+  coffees: [Coffee!]!
+  sayHello: String!
+}
+```
+
+
+
+`@Args` 装饰器允许我们传入一些参数，如下：
+
+![image-20230717112833563](index.assets/image-20230717112833563.png)
+
+
+
+### 创建第一个修改接口
+
+在 GraphQL 中，我们使用 `mutation` 去修改数据
+
+像这样：
+
+```ts
+type Mutation {
+	createCoffee( createCoffeeInput: CreateCoffeeInput!): Coffee!
+}
+```
+
+
+
+示例：
+
+```diff
+//src/coffees/coffees.resolver.ts
+import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Coffee } from './entities/coffee.entity/coffee.entity';
+import { ParseIntPipe } from '@nestjs/common';
+
+@Resolver() // @Resolver 装饰器将一个类标识为 resolver, 意味这这个类，现在应该被 nestjs 的 GraphQL 模块所收集分析
+export class CoffeesResolver {
+  @Query(() => [Coffee], { name: 'coffees' })
+  async findAll() {
+    return [];
+  }
+  @Query(() => Coffee, { name: 'coffee' })
+  // 默认传入的参数 id 将会被解析为 string, 但是我们需要这个值是数字类型， 我们可以使用  ParseIntPipe 来解决这个问题
+  async findOne(@Args('id', { type: () => ID }, ParseIntPipe) id: number) {
+    return null;
+  }
+
++  // 这里设定 nullable: true 只是临时的，目的是让 graphql 能够 return null, 因为这里暂时没有实现逻辑
++  @Mutation(() => Coffee, { name: 'createCoffee', nullable: true })
++  async create(@Args('createCoffeeInput') createCoffeeInput) {
++    return null;
++  }
++}
+
+```
+
+注意，现在会报错：
+
+![image-20230717121055995](index.assets/image-20230717121055995.png)
+
+因为还没有定义输入类型， 也就是 `createCoffeeInput` 的类型， 创建类型：
+
+```bash
+ nest g class coffees/dto/create-coffee.input --no-spec
+```
+
+```ts
+// src/coffees/dto/create-coffee.input/create-coffee.input.ts
+export class CreateCoffeeInput {}
+```
+
+定义输入类型：
+
+```diff
+// src/coffees/dto/create-coffee.input/create-coffee.input.ts
+- export class CreateCoffeeInput {}
++ import { Field, InputType } from '@nestjs/graphql';
++ 
++ @InputType({ description: 'Create coffee input object type.' }) // description 可选， 只是一个描述
++ // 如果没有 graphql CLI 插件， 这里的每个字段都必须使用 @Field 装饰器装饰
++ export class CreateAdminContentDto {
++   @Field(() => String, { description: 'A new coffee name' })
++   name: string;
++   brand: string;
++   flavors: string[];
++ }
+```
+
+在 resolver 中指定类型
+
+```diff
+import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Coffee } from './entities/coffee.entity/coffee.entity';
+import { ParseIntPipe } from '@nestjs/common';
++ import { CreateCoffeeInput } from './dto/create-coffee.input/create-coffee.input';
+
+@Resolver() // @Resolver 装饰器将一个类标识为 resolver, 意味这这个类，现在应该被 nestjs 的 GraphQL 模块所收集分析
+export class CoffeesResolver {
+  @Query(() => [Coffee], { name: 'coffees' })
+  async findAll() {
+    return [];
+  }
+  @Query(() => Coffee, { name: 'coffee' })
+  // 默认传入的参数 id 将会被解析为 string, 但是我们需要这个值是数字类型， 我们可以使用  ParseIntPipe 来解决这个问题
+  async findOne(@Args('id', { type: () => ID }, ParseIntPipe) id: number) {
+    return null;
+  }
+
+  // 这里设定 nullable: true 只是临时的，目的是让 graphql 能够 return null, 因为这里暂时没有实现逻辑
+  @Mutation(() => Coffee, { name: 'createCoffee', nullable: true })
+-  async create(@Args('createCoffeeInput') createCoffeeInput) {
++  async create(
++    @Args('createCoffeeInput') createCoffeeInput: CreateCoffeeInput,
+  ) {
+    return null;
+  }
+}
+
+```
+
+生成的 schema
+
+```diff
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""Coffee module"""
+type Coffee {
+  brand: String!
+  flavors: [String!]!
+
+  """A unique identifier"""
+  id: ID!
+  name: String!
+}
+
++ """Create coffee input object type."""
++ input CreateCoffeeInput {
++   brand: String!
++   flavors: [String!]!
++ 
++   """A new coffee name"""
++   name: String!
++ }
+
++ type Mutation {
++   createCoffee(createCoffeeInput: CreateCoffeeInput!): Coffee
++ }
+
+type Query {
+  coffee(id: ID!): Coffee!
+  coffees: [Coffee!]!
+  sayHello: String!
+}
+```
+
+![image-20230717131510033](index.assets/image-20230717131510033.png)
+
+
+
